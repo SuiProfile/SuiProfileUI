@@ -12,8 +12,8 @@ import { Statistics } from "./page/Statistics";
 import { MyProfiles } from "./page/MyProfiles";
 import { Sidebar } from "./components/Sidebar";
 import { GeneralStats } from "./page/GeneralStats";
-import { Links } from "./page/Links";
 import { Settings } from "./page/Settings";
+import Links from "./page/Links";
 
 function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
