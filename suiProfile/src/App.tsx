@@ -12,6 +12,7 @@ import { Statistics } from "./page/Statistics";
 import { MyProfiles } from "./page/MyProfiles";
 import { Sidebar } from "./components/Sidebar";
 import { GeneralStats } from "./page/GeneralStats";
+import { Links } from "./page/Links";
 
 function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -24,6 +25,7 @@ function Layout({ children }: { children: React.ReactNode }) {
                           !location.pathname.startsWith("/profile") &&
                           !location.pathname.startsWith("/my-profiles") &&
                           !location.pathname.startsWith("/stats") &&
+                          !location.pathname.startsWith("/links") &&
                           !location.pathname.startsWith("/register-username") &&
                           location.pathname !== "/";
 
@@ -68,6 +70,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/my-profiles" element={<MyProfiles />} />
           <Route path="/stats" element={<GeneralStats />} />
+          <Route path="/links" element={<Links />} />
           <Route path="/register-username" element={<RegisterUsername />} />
           <Route path="/profile/create" element={<CreateProfile />} />
           <Route path="/profile/:profileId/edit" element={<EditProfile />} />

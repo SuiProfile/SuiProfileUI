@@ -56,7 +56,8 @@ export function Sidebar() {
         <nav className="space-y-1">
           <NavItem to="/my-profiles" icon="account_circle" label="My Profiles" />
           <NavItem to="/dashboard" icon="dashboard" label="Dashboard"  />
-          <NavItem to="/stats" icon="insights" label="Analytics" badge="New" />
+          <NavItem to="/stats" icon="insights" label="Analytics" badge="Beta" />
+          <NavItem to="/links" icon="link" label="Links" />
         </nav>
 
         {/* Tools Section */}
