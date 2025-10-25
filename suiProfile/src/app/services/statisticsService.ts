@@ -1,18 +1,7 @@
 import { Transaction } from "@mysten/sui/transactions";
 import { SuiClient } from "@mysten/sui/client";
 import { bcs } from "@mysten/sui/bcs";
-
-export interface StatisticsData {
-  id: string;
-  profileId: string;
-  owner: string;
-  totalClicks: number;
-  uniqueVisitors: number;
-  linkClicks: Map<string, number>;
-  sourceClicks: Map<string, number>;
-  lastClickMs: number;
-  createdAt: number;
-}
+import { StatisticsData } from "../../models/statistics-data";
 
 export class StatisticsService {
   constructor(

@@ -1,0 +1,1 @@
+export const THEMES_COLOR = ["dark", "light", "blue", "green", "purple", "pink"];

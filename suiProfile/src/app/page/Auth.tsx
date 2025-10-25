@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useNavigate } from "react-router-dom";
 
-export function Auth() {
+export default function Auth() {
   const account = useCurrentAccount();
   const navigate = useNavigate();
   const [checking, setChecking] = useState(false);

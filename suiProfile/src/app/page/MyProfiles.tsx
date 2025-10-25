@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useNavigate } from "react-router-dom";
 import { useSuiServices } from "../hooks/useSuiServices";
-import type { ProfileData } from "../services/profileService";
+import { ProfileData } from "../../models/entity/profile-data";
 
-export function MyProfiles() {
+export default function MyProfiles() {
   const account = useCurrentAccount();
   const navigate = useNavigate();
   const { client, profileService } = useSuiServices();

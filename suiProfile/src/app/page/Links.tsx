@@ -1,34 +1,33 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useCurrentAccount, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
-import { useNavigate } from "react-router-dom";
 import { useSuiServices } from "../hooks/useSuiServices";
-import type { ProfileData } from "../services/profileService";
 import { CreateProfileDialog } from "../components/CreateProfileDialog";
 
-type DragPayload = {
-  linkId: string;
-  from: "library" | "profile";
-  fromProfileId?: string;
-  token?: string;
-};
-
-type LibraryItem = {
-  id: string;
-  label: string;
-  url: string;
-  favicon?: string;
-};
+import { checkLink } from "../services/link.service";
+import { LibraryItem } from "../../models/library-item";
+import { DragPayload } from "../../models/drag-payload";
+import { ProfileData } from "../../models/entity/profile-data";
 
 const MAX_LABEL_LEN = 60;
 const MAX_URL_LEN = 200;
 const LIB_STORAGE_KEY = "links-lib-v1";
 const ORDER_STORAGE_KEY = "profile-link-order-v1";
+
 const urlRegex = /^https?:\/\/(?:[a-zA-Z0-9-_]+\.)+[a-zA-Z]{2,}(?:\/\S*)?$/i;
 
+function googleFaviconFrom(urlLike: string | undefined | null, size: 16 | 24 | 32 | 48 | 64 = 32): string | null {
+  if (!urlLike) return null;
+  try {
+    const u = new URL(urlLike);
+    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(u.hostname)}&sz=${size}`;
+  } catch {
+    return null;
+  }
+}
+
 export default function Links() {
-  // ---- Hooks (her zaman, tepe seviyede ve aynı sırada) ----
+  // ---- Hooks ----
   const account = useCurrentAccount();
-  const navigate = useNavigate();
   const { client, profileService } = useSuiServices();
   const { mutate: signAndExecute } = useSignAndExecuteTransaction();
 
@@ -65,7 +64,7 @@ export default function Links() {
   const deletingRef = useRef<Set<string>>(new Set());
   const libIdCounter = useRef(1);
 
-  // Search / filter (menubar)
+  // Search / filter
   const [search, setSearch] = useState("");
 
   // Close preview with ESC
@@ -138,10 +137,11 @@ export default function Links() {
     } catch {}
   };
 
-  // ---- Library ops ----
-  const addToLibrary = () => {
+  // ---- Library ops (SERVİS ENTEGRASYONU) ----
+  const addToLibrary = async () => {
     const label = newLabel.trim();
     const url = newUrl.trim();
+
     if (!label || label.length < 2) return showToast("Başlık en az 2 karakter");
     if (!(url.startsWith("/") || urlRegex.test(url))) return showToast("URL https:// ile başlamalı veya /slug olmalı");
 
@@ -152,17 +152,46 @@ export default function Links() {
     }
 
     setAddingToLibrary(true);
-    const item: LibraryItem = {
-      id: String(libIdCounter.current++),
-      label: label.slice(0, MAX_LABEL_LEN),
-      url: url.slice(0, MAX_URL_LEN)
-    };
-    const next = [item, ...library];
-    persistLibrary(next);
-    setNewLabel("");
-    setNewUrl("");
-    setAddingToLibrary(false);
-    showToast("Kütüphaneye eklendi", "success");
+
+    try {
+      let finalUrl = url;
+      let favicon: string | undefined;
+
+      // /slug ise harici test yapma (on-chain iç navigasyon olabilir)
+      if (urlRegex.test(url)) {
+        // Harici URL → serviste test et
+        const res = await checkLink(url, { timeoutMs: 6000 });
+        if (!res.reachable) {
+          showToast("Linke ulaşılamadı (timeout veya CORS)", "error");
+          setAddingToLibrary(false);
+          return;
+        }
+        finalUrl = res.finalUrl || url; // yönlendirme sonrası
+        favicon = res.favicon || googleFaviconFrom(finalUrl) || undefined;
+      } else {
+        // /slug → favicon yok, eklemeye izin ver
+        favicon = undefined;
+      }
+
+      const item: LibraryItem = {
+        id: String(libIdCounter.current++),
+        label: label.slice(0, MAX_LABEL_LEN),
+        url: finalUrl.slice(0, MAX_URL_LEN),
+        favicon,
+      };
+
+      const next = [item, ...library];
+      persistLibrary(next);
+
+      setNewLabel("");
+      setNewUrl("");
+      showToast("Kütüphaneye eklendi", "success");
+    } catch (err) {
+      console.error(err);
+      showToast("Ekleme sırasında bir hata oluştu");
+    } finally {
+      setAddingToLibrary(false);
+    }
   };
 
   // ---- Chain ops ----
@@ -411,7 +440,7 @@ export default function Links() {
     }
   };
 
-  // ---- Derived computations (hook) - her zaman çağrılır ----
+  // ---- Derived ----
   const profileMatches = (p: ProfileData, term: string) => {
     if (!term) return true;
     const q = term.toLowerCase();
@@ -438,7 +467,7 @@ export default function Links() {
     return [...filtered, ...remaining];
   };
 
-  // ---- Tek return yapısı: content seçimi ----
+  // ---- Content ----
   let content: React.ReactNode = null;
 
   if (!account) {
@@ -498,13 +527,14 @@ export default function Links() {
                 }`}
                 placeholder="https://... veya /username/slug"
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") addToLibrary();
+                  if (e.key === "Enter") void addToLibrary();
                 }}
               />
               <button
                 type="button"
                 onClick={addToLibrary}
-                className="h-10 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 rounded-xl bg-lime-400 text-black font-bold shadow-lg shadow-lime-400/30 hover:bg-lime-300 transition w-full md:w-auto"
+                className="h-10 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 rounded-xl bg-lime-400 text-black font-bold shadow-lg shadow-lime-400/30 hover:bg-lime-300 transition w-full md:w-auto disabled:opacity-50"
+                disabled={addingToLibrary}
               >
                 {addingToLibrary && <span className="w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin" />}
                 <span>Ekle</span>
@@ -520,9 +550,17 @@ export default function Links() {
                   onDragStart={(e) => onDragStart(e, { linkId: item.id, from: "library" })}
                   title={item.url}
                 >
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium truncate">{item.label}</div>
-                    <div className="text-xs text-gray-500 truncate">{item.url}</div>
+                  <div className="min-w-0 flex items-center gap-2">
+                    {/* 👇 Favicon başta */}
+                    {item.favicon ? (
+                      <img src={item.favicon} alt="" className="w-4 h-4 rounded" loading="lazy" />
+                    ) : (
+                      <i className="pi pi-link text-gray-400 text-sm" />
+                    )}
+                    <div className="truncate">
+                      <div className="text-sm font-medium truncate">{item.label}</div>
+                      <div className="text-xs text-gray-500 truncate">{item.url}</div>
+                    </div>
                   </div>
                 </li>
               ))}
@@ -568,6 +606,7 @@ export default function Links() {
                   <ul className="flex flex-col gap-2">
                     {labels.map((label, idx) => {
                       const url = p.links.get(label) || "";
+                      const fav = googleFaviconFrom(url, 16);
                       return (
                         <li
                           key={label}
@@ -580,6 +619,12 @@ export default function Links() {
                         >
                           <div className="flex items-center gap-2 min-w-0">
                             <i className="pi pi-grip-vertical text-gray-400" />
+                            {/* 👇 Favicon başta */}
+                            {fav ? (
+                              <img src={fav} alt="" className="w-4 h-4 rounded shrink-0" loading="lazy" />
+                            ) : (
+                              <i className="pi pi-link text-gray-400 text-sm shrink-0" />
+                            )}
                             <div className="truncate">
                               <div className="text-sm font-medium truncate">{label}</div>
                               <a
@@ -661,7 +706,7 @@ export default function Links() {
     );
   }
 
-  // ---- Render (tek return) ----
+  // ---- Render ----
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
       {/* Header */}

@@ -17,16 +17,11 @@ import {
 } from "@radix-ui/themes";
 import { TrashIcon } from "@radix-ui/react-icons";
 import { useSuiServices } from "../hooks/useSuiServices";
-import { ProfileData } from "../services/profileService";
+import { ProfileData } from "../../models/entity/profile-data";
+import { Toast } from "../../models/toast";
+import { THEMES_COLOR } from "../static/themes-color";
 
-interface Toast {
-  message: string;
-  type: 'success' | 'error';
-}
-
-const THEMES = ["dark", "light", "blue", "green", "purple", "pink"];
-
-export function EditProfile() {
+export default function EditProfile() {
   const { profileId } = useParams<{ profileId: string }>();
   const account = useCurrentAccount();
   const navigate = useNavigate();
@@ -346,7 +341,7 @@ export function EditProfile() {
                   >
                     <Select.Trigger style={{ width: "100%" }} />
                     <Select.Content>
-                      {THEMES.map(theme => (
+                      {THEMES_COLOR.map((theme: string) => (
                         <Select.Item key={theme} value={theme}>
                           {theme.charAt(0).toUpperCase() + theme.slice(1)}
                         </Select.Item>

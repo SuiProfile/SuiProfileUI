@@ -1,9 +1,9 @@
 import { useMemo } from "react";
-import { useNetworkVariable } from "../networkConfig";
 import { ProfileService } from "../services/profileService";
 import { StatisticsService } from "../services/statisticsService";
 import { useSuiClient } from "@mysten/dapp-kit";
 import { WalrusService } from "../services/walrusService";
+import { useNetworkVariable } from "../../networkConfig";
 
 export function useSuiServices() {
   const client = useSuiClient();

@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useSuiServices } from "../hooks/useSuiServices";
-import type { ProfileData } from "../services/profileService";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { ProfileData } from "../../models/entity/profile-data";
+import { CHART_COLORS } from "../static/chart_colors";
 
-const CHART_COLORS = ['#a3e635', '#84cc16', '#65a30d', '#4d7c0f', '#3f6212', '#365314'];
 
-export function GeneralStats() {
+export default function GeneralStats() {
   const account = useCurrentAccount();
   const { client, profileService, statisticsService } = useSuiServices();
 

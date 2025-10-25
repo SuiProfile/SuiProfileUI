@@ -1,36 +1,9 @@
 import { Transaction } from "@mysten/sui/transactions";
 import { SuiClient } from "@mysten/sui/client";
 import { bcs } from "@mysten/sui/bcs";
-
-export interface ProfileData {
-  id: string;
-  owner: string;
-  slug: string;
-  baseUsername: string;
-  avatarCid: string;
-  bio: string;
-  links: Map<string, string>;
-  theme: string;
-  isCategory: boolean;
-  parentSlug: string;
-  createdAt: number;
-}
-
-export interface CreateProfileParams {
-  username: string;  // 🆕 USERNAME EKLENDI
-  slug: string;
-  avatarCid: string;
-  bio: string;
-  theme: string;
-  isCategory: boolean;
-  parentSlug: string;
-}
-
-export interface UpdateProfileParams {
-  bio: string;
-  avatarCid: string;
-  theme: string;
-}
+import { CreateProfileParams } from "../../models/entity/create-profile-params";
+import { UpdateProfileParams } from "../../models/entity/update-profile-params";
+import { ProfileData } from "../../models/entity/profile-data";
 
 export class ProfileService {
   constructor(

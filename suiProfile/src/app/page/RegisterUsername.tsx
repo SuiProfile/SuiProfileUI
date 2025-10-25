@@ -2,13 +2,9 @@ import { useState, useEffect } from "react";
 import { useCurrentAccount, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
 import { useNavigate } from "react-router-dom";
 import { useSuiServices } from "../hooks/useSuiServices";
+import { Toast } from "../../models/toast";
 
-interface Toast {
-  message: string;
-  type: 'success' | 'error';
-}
-
-export function RegisterUsername() {
+export default function RegisterUsername() {
   const account = useCurrentAccount();
   const navigate = useNavigate();
   const { profileService, client } = useSuiServices();

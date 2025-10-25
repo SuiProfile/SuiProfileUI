@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSignAndExecuteTransaction } from "@mysten/dapp-kit";
 import { useSuiServices } from "../hooks/useSuiServices";
-import { ProfileData } from "../services/profileService";
+import { ProfileData } from "../../models/entity/profile-data";
 
-export function PublicProfile() {
+export default function PublicProfile() {
   const { username, slug } = useParams<{ username: string; slug: string }>();
   const navigate = useNavigate();
   const { client, profileService, statisticsService } = useSuiServices();
