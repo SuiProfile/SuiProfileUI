@@ -13,5 +13,6 @@ const { networkConfig, useNetworkVariable, useNetworkVariables } =
       url: getFullnodeUrl("mainnet"),
     },
   });
-
+export type NetworkKey = keyof typeof networkConfig;
+export const defaultNetwork: NetworkKey = "testnet";
 export { useNetworkVariable, useNetworkVariables, networkConfig };
