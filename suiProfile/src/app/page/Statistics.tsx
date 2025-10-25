@@ -5,7 +5,7 @@ import { useSuiServices } from "../hooks/useSuiServices";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { ProfileData } from "../../models/entity/profile-data";
 import { StatisticsData } from "../../models/statistics-data";
-import { CHART_COLORS } from "../static/chart_colors";
+import { CHART_COLORS } from "../static/chart-colors";
 
 export default function Statistics() {
   const { profileId } = useParams<{ profileId: string }>();

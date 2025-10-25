@@ -7,8 +7,9 @@ import { SuiClientProvider, WalletProvider } from "@mysten/dapp-kit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Theme } from "@radix-ui/themes";
 import { router } from "./app/router/router";
-import { networkConfig } from "./networkConfig";
+import { networkConfig } from "./app/config/networkConfig";
 import "../src/app/styles/tailwind.css";
+import { RegisterEnokiWallets } from "./app/components/RegisterEnokiWallets";
 
 const queryClient = new QueryClient();
 
@@ -17,6 +18,7 @@ export default function App() {
     <Theme appearance="dark">
       <QueryClientProvider client={queryClient}>
         <SuiClientProvider networks={networkConfig} defaultNetwork="testnet">
+          <RegisterEnokiWallets />
           <WalletProvider autoConnect>
              <RouterProvider router={router} />
           </WalletProvider>

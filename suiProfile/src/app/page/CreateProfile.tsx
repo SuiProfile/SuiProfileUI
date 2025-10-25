@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { useCurrentAccount, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
 import { useNavigate } from "react-router-dom";
 import { useSuiServices } from "../hooks/useSuiServices";
-import { Toast } from "../../models/toast";
 import { THEMES } from "../static/themes";
+import { pageMessages } from "../static/messages";
+import { Toast } from "../models/toast";
 
 export default function CreateProfile() {
   const account = useCurrentAccount();
@@ -63,7 +64,7 @@ export default function CreateProfile() {
         {
           onSuccess: async (result) => {
             console.log("✅ Profile created:", result);
-            showToast("Profil başarıyla oluşturuldu!", "success");
+            showToast(pageMessages.createProfile.success, "success");
             setLoading(false);
             
             setTimeout(() => {
@@ -72,14 +73,14 @@ export default function CreateProfile() {
           },
           onError: (error) => {
             console.error("❌ Error creating profile:", error);
-            showToast("Profil oluşturulamadı", "error");
+            showToast(pageMessages.createProfile.error, "error");
             setLoading(false);
           },
         }
       );
     } catch (error) {
       console.error("❌ Error preparing transaction:", error);
-      showToast("İşlem hazırlanamadı", "error");
+      showToast(pageMessages.createProfile.transactionError, "error");
       setLoading(false);
     }
   };
@@ -90,7 +91,16 @@ export default function CreateProfile() {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.log("No file selected");
+      return;
+    }
+    
+    console.log("📁 File selected:", {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    });
     
     // Preview
     const reader = new FileReader();
@@ -101,18 +111,28 @@ export default function CreateProfile() {
     
     try {
       setUploading(true);
+      console.log("🚀 Starting upload...");
+      
       const cid = await walrusService.upload(file);
+      console.log("✅ Upload successful, CID:", cid);
+      
       handleChange("avatarCid", cid);
-      showToast("Görsel yüklendi", "success");
+      showToast(pageMessages.createProfile.imageUploadSuccess, "success");
     } catch (err) {
-      console.error(err);
-      showToast("Yükleme başarısız", "error");
+      console.error("❌ Upload failed:", err);
+      
+      let errorMessage = pageMessages.createProfile.imageUploadError;
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      showToast(errorMessage, "error");
       setAvatarPreview("");
     } finally {
       setUploading(false);
     }
   };
-
+  
   useEffect(() => {
     if (!account) {
       navigate("/");
@@ -168,9 +188,9 @@ export default function CreateProfile() {
               <div className="w-16 h-16 bg-gradient-to-br from-lime-400 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <span className="material-symbols-outlined text-black text-3xl font-bold">add_circle</span>
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Yeni Profil Oluştur</h1>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{pageMessages.createProfile.title}</h1>
               <p className="text-gray-500 dark:text-gray-400">
-                Linktree profilinizi oluşturun ve linklerinizi paylaşın
+                {pageMessages.createProfile.subtitle}
               </p>
             </div>
 
@@ -213,11 +233,11 @@ export default function CreateProfile() {
                   />
                   <div className="px-6 py-2.5 bg-lime-400/10 hover:bg-lime-400/20 text-lime-600 dark:text-lime-400 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 border border-lime-400/20">
                     <span className="material-symbols-outlined text-lg">upload</span>
-                    {uploading ? "Yükleniyor..." : "Avatar Yükle"}
+                    {uploading ? pageMessages.createProfile.uploading : pageMessages.createProfile.avatarUpload}
                   </div>
                 </label>
                 <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                  PNG, JPG veya GIF - Maksimum 5MB
+                  {pageMessages.createProfile.avatarDescription}
                 </p>
               </div>
 
@@ -225,7 +245,7 @@ export default function CreateProfile() {
               <div>
                 <label className="text-sm font-semibold text-gray-900 dark:text-white mb-3 block flex items-center gap-2">
                   <span className="material-symbols-outlined text-lg">account_circle</span>
-                  Kullanıcı Adı *
+                  {pageMessages.createProfile.username} *
                 </label>
                 {myUsernames.length > 0 ? (
                   <select
@@ -245,7 +265,7 @@ export default function CreateProfile() {
                     </span>
                     <input
                       className="w-full h-14 pl-9 pr-4 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white outline-none focus:border-lime-400 focus:ring-4 focus:ring-lime-400/20 transition-all duration-200 font-medium"
-                      placeholder="kullanici-adi"
+                      placeholder="username"
                       value={formData.username}
                       onChange={(e) => handleChange("username", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
                       required
@@ -253,7 +273,7 @@ export default function CreateProfile() {
                   </div>
                 )}
                 <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  Register ettiğiniz username'i seçin
+                  {pageMessages.createProfile.usernameRequired}
                 </p>
               </div>
 
@@ -261,7 +281,7 @@ export default function CreateProfile() {
               <div>
                 <label className="text-sm font-semibold text-gray-900 dark:text-white mb-3 block flex items-center gap-2">
                   <span className="material-symbols-outlined text-lg">link</span>
-                  Profil Slug *
+                  {pageMessages.createProfile.profileSlug} *
                 </label>
                 <input
                   className="w-full h-14 px-4 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white outline-none focus:border-lime-400 focus:ring-4 focus:ring-lime-400/20 transition-all duration-200 font-medium"
@@ -273,7 +293,7 @@ export default function CreateProfile() {
                 <div className="mt-2 p-3 bg-lime-400/10 rounded-xl border border-lime-400/20">
                   <p className="text-xs text-lime-600 dark:text-lime-400 font-medium flex items-center gap-2">
                     <span className="material-symbols-outlined text-sm">link</span>
-                    Profil URL: {formData.username ? `/${formData.username}/${formData.slug || "<slug>"}` : "/<username>/<slug>"}
+                    {pageMessages.createProfile.profileUrl} {formData.username ? `/${formData.username}/${formData.slug || "<slug>"}` : "/<username>/<slug>"}
                   </p>
                 </div>
               </div>
@@ -282,17 +302,17 @@ export default function CreateProfile() {
               <div>
                 <label className="text-sm font-semibold text-gray-900 dark:text-white mb-3 block flex items-center gap-2">
                   <span className="material-symbols-outlined text-lg">description</span>
-                  Biyografi
+                  {pageMessages.createProfile.bio}
                 </label>
                 <textarea
                   className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white outline-none focus:border-lime-400 focus:ring-4 focus:ring-lime-400/20 transition-all duration-200 resize-none"
-                  placeholder="Kendinizi tanıtın..."
+                  placeholder={pageMessages.createProfile.bioPlaceholder}
                   value={formData.bio}
                   onChange={(e) => handleChange("bio", e.target.value)}
                   rows={4}
                 />
                 <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  {formData.bio.length}/500 karakter
+                  {formData.bio.length}/500 {pageMessages.createProfile.bioCharacterCount}
                 </p>
               </div>
 
@@ -300,7 +320,7 @@ export default function CreateProfile() {
               <div>
                 <label className="text-sm font-semibold text-gray-900 dark:text-white mb-3 block flex items-center gap-2">
                   <span className="material-symbols-outlined text-lg">palette</span>
-                  Tema Seçimi
+                  {pageMessages.createProfile.themeSelection}
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {THEMES.map((theme) => (
@@ -347,9 +367,9 @@ export default function CreateProfile() {
                     <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Kategori Profili</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{pageMessages.createProfile.categoryProfile}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Ana profilinize bağlı bir kategori profili oluşturun
+                      {pageMessages.createProfile.categoryProfileDescription}
                     </p>
                   </div>
                 </label>
@@ -360,16 +380,16 @@ export default function CreateProfile() {
                 <div className="p-5 bg-amber-500/10 rounded-2xl border border-amber-500/30">
                   <label className="text-sm font-semibold text-amber-900 dark:text-amber-300 mb-3 block flex items-center gap-2">
                     <span className="material-symbols-outlined text-lg">account_tree</span>
-                    Ana Profil Slug
+                    {pageMessages.createProfile.parentSlug}
                   </label>
                   <input
                     className="w-full h-14 px-4 rounded-2xl border-2 border-amber-500/30 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 transition-all duration-200 font-medium"
-                    placeholder="kullanici-adi-main"
+                    placeholder={pageMessages.createProfile.parentSlugPlaceholder}
                     value={formData.parentSlug}
                     onChange={(e) => handleChange("parentSlug", e.target.value)}
                   />
                   <p className="mt-2 text-xs text-amber-700 dark:text-amber-400">
-                    Bu kategorinin bağlı olduğu ana profil slug'ı
+                    {pageMessages.createProfile.parentSlugDescription}
                   </p>
                 </div>
               )}
@@ -388,12 +408,12 @@ export default function CreateProfile() {
                   {loading ? (
                     <>
                       <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-                      Oluşturuluyor...
+                      {pageMessages.createProfile.creating}
                     </>
                   ) : (
                     <>
                       <span className="material-symbols-outlined">add_circle</span>
-                      Profil Oluştur
+                      {pageMessages.createProfile.createButton}
                     </>
                   )}
                 </button>
@@ -403,7 +423,7 @@ export default function CreateProfile() {
                   disabled={loading}
                   className="h-14 rounded-2xl border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 disabled:opacity-50"
                 >
-                  İptal
+                  {pageMessages.createProfile.cancel}
                 </button>
               </div>
             </div>

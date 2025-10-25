@@ -3,7 +3,7 @@ import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useSuiServices } from "../hooks/useSuiServices";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { ProfileData } from "../../models/entity/profile-data";
-import { CHART_COLORS } from "../static/chart_colors";
+import { CHART_COLORS } from "../static/chart-colors";
 
 
 export default function GeneralStats() {

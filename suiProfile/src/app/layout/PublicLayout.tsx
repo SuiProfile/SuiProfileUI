@@ -13,7 +13,6 @@ export default function PublicLayout() {
         ) : (
           <div className="h-10" />
         )}
-        <ConnectButton />
       </div>
       <main className="p-4 md:p-8">
         <Outlet />

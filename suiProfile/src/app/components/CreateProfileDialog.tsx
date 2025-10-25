@@ -3,20 +3,8 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { useCurrentAccount, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
 import { useNavigate } from "react-router-dom";
 import { useSuiServices } from "../hooks/useSuiServices";
-
-interface Toast {
-  message: string;
-  type: "success" | "error";
-}
-
-const THEMES = [
-  { value: "dark", label: "Dark", icon: "dark_mode" },
-  { value: "light", label: "Light", icon: "light_mode" },
-  { value: "blue", label: "Blue", icon: "water_drop" },
-  { value: "green", label: "Green", icon: "eco" },
-  { value: "purple", label: "Purple", icon: "palette" },
-  { value: "pink", label: "Pink", icon: "favorite" },
-];
+import { Toast } from "../models/toast";
+import { THEMES } from "../static/themes";
 
 type CreateProfileDialogProps = {
   open: boolean;
@@ -64,20 +52,42 @@ export function CreateProfileDialog({
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
+    if (!file) {
+      console.log("No file selected");
+      return;
+    }
+    
+    console.log("📁 File selected:", {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    });
+    
+    // Preview
     const reader = new FileReader();
-    reader.onloadend = () => setAvatarPreview(reader.result as string);
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string);
+    };
     reader.readAsDataURL(file);
-
+    
     try {
       setUploading(true);
+      console.log("🚀 Starting upload...");
+      
       const cid = await walrusService.upload(file);
+      console.log("✅ Upload successful, CID:", cid);
+      
       handleChange("avatarCid", cid);
-      showToast("Görsel yüklendi", "success");
+      showToast("Görsel başarıyla yüklendi", "success");
     } catch (err) {
-      console.error(err);
-      showToast("Yükleme başarısız", "error");
+      console.error("❌ Upload failed:", err);
+      
+      let errorMessage = "Yükleme başarısız";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      showToast(errorMessage, "error");
       setAvatarPreview("");
     } finally {
       setUploading(false);

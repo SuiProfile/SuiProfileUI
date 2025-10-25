@@ -1,5 +1,6 @@
 import { ConnectButton } from "@mysten/dapp-kit";
 import { Link, useLocation } from "react-router-dom";
+import { navigationMessages } from "../static/messages";
 
 function NavItem({ to, icon, label, badge }: { to: string; icon: string; label: string; badge?: string }) {
   const location = useLocation();
@@ -44,8 +45,8 @@ export function Sidebar() {
                   <span className="material-symbols-outlined text-black font-bold text-xl">account_circle</span>
                 </div>
                 <div>
-                  <h1 className="text-white font-bold text-base">Sui Profile</h1>
-                  <p className="text-gray-500 text-xs">Linktree on Sui</p>
+                  <h1 className="text-white font-bold text-base">{navigationMessages.sidebar.appName}</h1>
+                  <p className="text-gray-500 text-xs">{navigationMessages.sidebar.tagline}</p>
                 </div>
               </div>
             )}
@@ -54,19 +55,19 @@ export function Sidebar() {
 
         {/* Main Navigation */}
         <nav className="space-y-1">
-          <NavItem to="/my-profiles" icon="account_circle" label="My Profiles" />
-          <NavItem to="/dashboard" icon="dashboard" label="Dashboard"  />
-          <NavItem to="/stats" icon="insights" label="Analytics" badge="Beta" />
-          <NavItem to="/links" icon="link" label="Links" />
+          <NavItem to="/my-profiles" icon="account_circle" label={navigationMessages.navItems.myProfiles} />
+          <NavItem to="/dashboard" icon="dashboard" label={navigationMessages.navItems.dashboard} />
+          <NavItem to="/stats" icon="insights" label={navigationMessages.navItems.analytics} badge={navigationMessages.badges.beta} />
+          <NavItem to="/links" icon="link" label={navigationMessages.navItems.links} />
         </nav>
 
         {/* Tools Section */}
         <div className="mt-8">
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-4">
-            Tools
+            {navigationMessages.sidebar.tools}
           </h3>
           <nav className="space-y-1">
-            <NavItem to="/settings" icon="settings" label="Settings" />
+            <NavItem to="/settings" icon="settings" label={navigationMessages.navItems.settings} />
           </nav>
         </div>
       </div>

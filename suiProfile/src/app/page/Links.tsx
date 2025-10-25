@@ -89,11 +89,11 @@ export default function Links() {
         const maxId = parsed.reduce((m, x) => Math.max(m, parseInt(x.id, 10) || 0), 0);
         libIdCounter.current = maxId + 1;
       }
-    } catch {}
+    } catch { }
     try {
       const raw = localStorage.getItem(ORDER_STORAGE_KEY);
       if (raw) setOrders(JSON.parse(raw));
-    } catch {}
+    } catch { }
   }, []);
 
   // ---- Profiles load ----
@@ -127,14 +127,14 @@ export default function Links() {
     setLibrary(next);
     try {
       localStorage.setItem(LIB_STORAGE_KEY, JSON.stringify(next));
-    } catch {}
+    } catch { }
   };
 
   const persistOrders = (next: Record<string, string[]>) => {
     setOrders(next);
     try {
       localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(next));
-    } catch {}
+    } catch { }
   };
 
   // ---- Library ops (SERVİS ENTEGRASYONU) ----
@@ -511,20 +511,18 @@ export default function Links() {
                 value={newLabel}
                 onChange={(e) => setNewLabel(e.currentTarget.value)}
                 maxLength={MAX_LABEL_LEN}
-                className={`h-10 rounded-lg border bg-white dark:bg-gray-900 px-3 text-sm outline-none focus:ring-2 focus:ring-[#2665D6] ${
-                  newLabel && newLabel.trim().length < 2 ? "border-red-400 dark:border-red-500" : "border-gray-300 dark:border-gray-700"
-                }`}
+                className={`h-10 rounded-lg border bg-white dark:bg-gray-900 px-3 text-sm outline-none focus:ring-2 focus:ring-[#2665D6] ${newLabel && newLabel.trim().length < 2 ? "border-red-400 dark:border-red-500" : "border-gray-300 dark:border-gray-700"
+                  }`}
                 placeholder="Başlık (ör. Instagram)"
               />
               <input
                 value={newUrl}
                 onChange={(e) => setNewUrl(e.currentTarget.value)}
                 maxLength={MAX_URL_LEN}
-                className={`h-10 rounded-lg border bg-white dark:bg-gray-900 px-3 text-sm outline-none focus:ring-2 focus:ring-[#2665D6] ${
-                  newUrl && !(newUrl.startsWith("/") || urlRegex.test(newUrl))
+                className={`h-10 rounded-lg border bg-white dark:bg-gray-900 px-3 text-sm outline-none focus:ring-2 focus:ring-[#2665D6] ${newUrl && !(newUrl.startsWith("/") || urlRegex.test(newUrl))
                     ? "border-red-400 dark:border-red-500"
                     : "border-gray-300 dark:border-gray-700"
-                }`}
+                  }`}
                 placeholder="https://... veya /username/slug"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") void addToLibrary();
@@ -576,9 +574,8 @@ export default function Links() {
               return (
                 <div
                   key={p.id}
-                  className={`bg-white dark:bg-gray-900 rounded-2xl shadow-md p-4 hover:ring-2 hover:ring-[#2665D6]/30 cursor-pointer ${
-                    isSelected ? "ring-2 ring-[#2665D6]" : ""
-                  }`}
+                  className={`bg-white dark:bg-gray-900 rounded-2xl shadow-md p-4 hover:ring-2 hover:ring-[#2665D6]/30 cursor-pointer ${isSelected ? "ring-2 ring-[#2665D6]" : ""
+                    }`}
                   onClick={() => {
                     setSelectedProfileId(p.id);
                     setSelectedProfile(p);
@@ -756,9 +753,8 @@ export default function Links() {
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow text-white ${
-            toast.type === "success" ? "bg-emerald-600" : "bg-red-600"
-          }`}
+          className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow text-white ${toast.type === "success" ? "bg-emerald-600" : "bg-red-600"
+            }`}
         >
           {toast.message}
         </div>
@@ -776,9 +772,31 @@ export default function Links() {
             const ids = await profileService.getUserProfiles(client, account.address);
             const details = await Promise.all(ids.map((id) => profileService.getProfile(client, id)));
             const list = details.filter((p): p is ProfileData => p !== null);
-            setProfiles(list);
-            if (list.length > 0 && !selectedProfileId) setSelectedProfileId(list[0].id);
-            showToast("Profil oluşturuldu", "success");
+
+            // Aynı username/slug kombinasyonu kontrolü
+            const usernameSlugMap = new Map<string, Set<string>>();
+            let hasDuplicate = false;
+
+            for (const profile of list) {
+              const key = profile.baseUsername;
+              if (!usernameSlugMap.has(key)) {
+                usernameSlugMap.set(key, new Set());
+              }
+
+              if (usernameSlugMap.get(key)!.has(profile.slug)) {
+                hasDuplicate = true;
+                showToast(`@${profile.baseUsername}/${profile.slug} kombinasyonu zaten mevcut!`, "error");
+                break;
+              }
+
+              usernameSlugMap.get(key)!.add(profile.slug);
+            }
+
+            if (!hasDuplicate) {
+              setProfiles(list);
+              if (list.length > 0 && !selectedProfileId) setSelectedProfileId(list[0].id);
+              showToast("Profil oluşturuldu", "success");
+            }
           } finally {
             setLoading(false);
           }

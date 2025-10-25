@@ -1,21 +1,28 @@
 import { useState, useEffect } from "react";
-import { useCurrentAccount } from "@mysten/dapp-kit";
+import { ConnectButton, useCurrentAccount } from "@mysten/dapp-kit";
 import { useNavigate } from "react-router-dom";
+import { useZkLogin } from "../hooks/useZkLogin";
+import { EnokiLoginButton } from "../components/EnokiLoginButton";
+import { Box } from "@radix-ui/themes";
+import { pageMessages } from "../static/messages/page";
 
 export default function Auth() {
   const account = useCurrentAccount();
   const navigate = useNavigate();
   const [checking, setChecking] = useState(false);
 
+  const { loginWithGoogle, isLoading, isAuthenticated } = useZkLogin();
+
   useEffect(() => {
-    if (account) {
+    if (account || isAuthenticated) {
       setChecking(true);
-      setTimeout(() => {
+      const t = setTimeout(() => {
         navigate("/dashboard");
         setChecking(false);
       }, 800);
+      return () => clearTimeout(t);
     }
-  }, [account, navigate]);
+  }, [account, isAuthenticated, navigate]);
 
   if (account) {
     return (
@@ -29,10 +36,9 @@ export default function Auth() {
               </div>
             </div>
 
-
             {/* Wallet Address */}
             <div className="bg-gray-50 dark:bg-[#0D0D0D] rounded-xl p-4 mb-6">
-              <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">WALLET ADDRESS</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">{pageMessages.auth.walletAddress}</p>
               <p className="text-xs text-gray-700 dark:text-gray-300 font-mono break-all">{account.address}</p>
             </div>
 
@@ -40,7 +46,7 @@ export default function Auth() {
             {checking && (
               <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400">
                 <div className="w-4 h-4 border-2 border-lime-400 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-sm">Redirecting...</span>
+                <span className="text-sm">{pageMessages.auth.redirecting}</span>
               </div>
             )}
           </div>
@@ -52,7 +58,6 @@ export default function Auth() {
   return (
     <div className="min-h-screen relative flex items-center justify-center p-6">
       <div className="w-full max-w-xl pt-18 -mt-10">
-
         {/* Main Card */}
         <div className="bg-white dark:bg-[#1A1A1A] rounded-3xl border border-gray-200 dark:border-gray-800 p-10">
           {/* Connect Wallet Message */}
@@ -61,10 +66,10 @@ export default function Auth() {
               <span className="material-symbols-outlined text-lime-600 dark:text-lime-400 text-4xl">account_balance_wallet</span>
             </div>
             <p className="text-sm text-gray-700 dark:text-gray-300 mb-2 font-medium">
-              Use the <strong className="text-lime-600 dark:text-lime-400">"Connect Wallet"</strong> button above
+              {pageMessages.auth.useConnectButton}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Click the connect button in the top right corner to get started
+              {pageMessages.auth.connectButtonDescription}
             </p>
           </div>
 
@@ -74,47 +79,48 @@ export default function Auth() {
               <div className="w-full border-t border-gray-200 dark:border-gray-800"></div>
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white dark:bg-[#1A1A1A] px-2 text-gray-500">Or</span>
+              <span className="bg-white dark:bg-[#1A1A1A] px-2 text-gray-500">{pageMessages.auth.or}</span>
             </div>
           </div>
 
-          {/* Google Button (Coming Soon) */}
-          <button
-            disabled
-            className="w-full h-12 rounded-xl bg-gray-50 dark:bg-[#0D0D0D] border border-gray-200 dark:border-gray-800 text-gray-400 dark:text-gray-500 font-medium flex items-center justify-center gap-2 cursor-not-allowed opacity-60"
-          >
-            <span className="material-symbols-outlined">language</span>
-            <span>Continue with Google</span>
-            <span className="text-xs ml-auto">(Soon)</span>
-          </button>
+          {/* Google Button */}
+          <Box className="flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
+            <ConnectButton 
+              className="flex w-full opacity-80 hover:opacity-100 transition-opacity"
+              style={{
+                backgroundColor: "rgba(163, 230, 53, 0.13)",
+                color: "#84cc16",
+              }}
+            />
+          </Box>
         </div>
 
         {/* Info Cards */}
         <div className="grid grid-cols-3 gap-3 mt-8">
           <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-gray-200 dark:border-gray-800 p-4 text-center">
             <span className="material-symbols-outlined text-lime-400 text-2xl mb-2 block">shield</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Secure</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{pageMessages.auth.secure}</p>
           </div>
           <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-gray-200 dark:border-gray-800 p-4 text-center">
             <span className="material-symbols-outlined text-lime-400 text-2xl mb-2 block">flash_on</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Fast</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{pageMessages.auth.fast}</p>
           </div>
           <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-gray-200 dark:border-gray-800 p-4 text-center">
             <span className="material-symbols-outlined text-lime-400 text-2xl mb-2 block">lock</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Private</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{pageMessages.auth.private}</p>
           </div>
         </div>
 
         {/* Footer */}
         <div className="text-center mt-8">
           <p className="text-xs text-gray-500 dark:text-gray-500">
-            By continuing, you agree to our{" "}
+            {pageMessages.auth.termsAndPrivacy}{" "}
             <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-              Terms
+              {pageMessages.auth.terms}
             </a>{" "}
-            and{" "}
+            {pageMessages.auth.and}{" "}
             <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-              Privacy Policy
+              {pageMessages.auth.privacyPolicy}
             </a>
           </p>
         </div>

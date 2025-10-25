@@ -1,13 +1,13 @@
-// src/app/guards/ProtectedRoute.tsx
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useCurrentAccount } from "@mysten/dapp-kit";
+import { useZkLogin } from "../hooks/useZkLogin";
 
 export default function ProtectedRoute() {
   const account = useCurrentAccount();
-  const location = useLocation();
+  const { isAuthenticated } = useZkLogin();
 
-  if (!account) {
-    return <Navigate to="/" replace state={{ from: location }} />;
+  if (account || isAuthenticated) {
+    return <Outlet />;
   }
-  return <Outlet />;
+  return <Navigate to="/" replace />;
 }
