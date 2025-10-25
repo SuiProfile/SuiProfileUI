@@ -8,6 +8,7 @@ type DragPayload = {
   linkId: string;
   from: 'library' | 'group';
   fromGroupId?: string;
+  token?: string; // unique per drag
 };
 
 const MAX_TITLE_LEN = 60;
@@ -30,9 +31,37 @@ export default function LinksPage() {
 
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
     setToast({ message, type });
+
+    // Ekranın alt ortasına ve alttan boşluğa sahip toast'ın otomatik kaybolmasını sağla
     window.clearTimeout((showToast as any)._t);
     (showToast as any)._t = window.setTimeout(() => setToast(null), 2200);
   };
+
+  {
+    toast && (
+      <div
+        style={{
+          position: "fixed",
+          left: "50%",
+          bottom: "36px", // Alttan boşluk
+          transform: "translateX(-50%)",
+          zIndex: 9999,
+          minWidth: "200px",
+          maxWidth: "calc(90vw)",
+          padding: "12px 32px",
+          borderRadius: "999px",
+          background: toast.type === "error" ? "#ef4444" : "#22c55e",
+          color: "#fff",
+          fontWeight: 600,
+          boxShadow: "0 4px 32px 0 rgb(0 0 0 / 20%)",
+          textAlign: "center"
+        }}
+      >
+        {toast.message}
+      </div>
+    )
+  }
+
 
   // Load once from storage service
   useEffect(() => {
@@ -82,6 +111,9 @@ export default function LinksPage() {
   // Artan şekilde id'ler için bir sayaç tutuyoruz.
   // Bunu component seviyesinde ref olarak tutmak uygundur.
   const linkIdCounter = useRef(1);
+  const deletingLinksRef = useRef<Set<string>>(new Set());
+  const deletingGroupsRef = useRef<Set<string>>(new Set());
+  const droppingRef = useRef<Set<string>>(new Set());
 
   const getNextLinkId = () => {
     return (linkIdCounter.current++).toString();
@@ -112,7 +144,7 @@ export default function LinksPage() {
         return;
       }
       const finalTitle = (title || res.title || '').toString().slice(0, MAX_TITLE_LEN) || normalized;
-      const link: LinkItem = { id: getNextLinkId(), text: finalTitle, url: normalized };
+      const link: LinkItem = { id: getNextLinkId(), text: finalTitle, url: normalized, favicon: res.favicon || undefined };
       setLibrary(prev => [link, ...prev]);
       setNewTitle("");
       setNewUrl("");
@@ -124,6 +156,9 @@ export default function LinksPage() {
 
   // DÜZELTME: localStorage'dan tüm grup anahtarını değil sadece link'i kaldır
   const removeLink = (groupId: string, linkId: string) => {
+    const key = `${groupId}:${linkId}`;
+    if (deletingLinksRef.current.has(key)) return; // guard re-entrancy
+    deletingLinksRef.current.add(key);
     setGroups(prev => {
       const nextGroups = prev.map(g =>
         g.id === groupId
@@ -135,10 +170,14 @@ export default function LinksPage() {
       showToast('Link silindi', 'success');
       return nextGroups;
     });
+    // release guard in next tick to avoid double clicks
+    setTimeout(() => deletingLinksRef.current.delete(key), 0);
   };
 
   // DÜZELTME: localStorage'dan sadece grup'u kaldır (ve persistState ile kalanları sakla)
   const removeGroup = (groupId: string) => {
+    if (deletingGroupsRef.current.has(groupId)) return; // guard re-entrancy
+    deletingGroupsRef.current.add(groupId);
     setGroups(prev => {
       const nextGroups = prev.filter(g => g.id !== groupId);
       // Güncellenmiş gruplar listesini localStorage'a kaydet
@@ -153,10 +192,12 @@ export default function LinksPage() {
       showToast('Grup silindi', 'success');
       return nextGroups;
     });
+    setTimeout(() => deletingGroupsRef.current.delete(groupId), 0);
   };
 
   const onDragStart = (e: React.DragEvent, payload: DragPayload) => {
-    e.dataTransfer.setData("application/json", JSON.stringify(payload));
+    const token = (globalThis as any).crypto?.randomUUID?.() || Math.random().toString(36).slice(2);
+    e.dataTransfer.setData("application/json", JSON.stringify({ ...payload, token }));
     e.dataTransfer.effectAllowed = "move";
   };
 
@@ -171,6 +212,9 @@ export default function LinksPage() {
     const raw = e.dataTransfer.getData("application/json");
     if (!raw) return;
     const payload = JSON.parse(raw) as DragPayload;
+    const key = payload.token || payload.linkId; // process once per drag
+    if (droppingRef.current.has(key)) return;
+    droppingRef.current.add(key);
     if (payload.from === 'library') {
       const link = library.find(l => l.id === payload.linkId);
       if (!link) return;
@@ -178,6 +222,7 @@ export default function LinksPage() {
     } else {
       moveLink(payload.fromGroupId!, toGroupId, payload.linkId, undefined);
     }
+    setTimeout(() => droppingRef.current.delete(key), 0);
   };
 
   const onDropBeforeIndex = (
@@ -190,6 +235,9 @@ export default function LinksPage() {
     const raw = e.dataTransfer.getData("application/json");
     if (!raw) return;
     const payload = JSON.parse(raw) as DragPayload;
+    const key = payload.token || payload.linkId;
+    if (droppingRef.current.has(key)) return;
+    droppingRef.current.add(key);
     if (payload.from === 'library') {
       const link = library.find(l => l.id === payload.linkId);
       if (!link) return;
@@ -197,6 +245,7 @@ export default function LinksPage() {
     } else {
       moveLink(payload.fromGroupId!, toGroupId, payload.linkId, toIndex);
     }
+    setTimeout(() => droppingRef.current.delete(key), 0);
   };
 
   const copyLinkToGroup = (toGroupId: string, link: LinkItem, toIndex?: number) => {
@@ -347,12 +396,17 @@ export default function LinksPage() {
           <ul className="flex flex-col gap-2">
             {library.map((link) => (
               <li key={link.id}
-                  className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 px-3 py-2"
-                  draggable
-                  onDragStart={(e) => onDragStart(e, { linkId: link.id, from: 'library' })}
+                className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 px-3 py-2"
+                draggable
+                onDragStart={(e) => onDragStart(e, { linkId: link.id, from: 'library' })}
               >
                 <div className="min-w-0">
-                  <div className="text-sm font-medium truncate" title={`id: ${link.id}`}>{link.text}</div>
+                  <div className="text-sm font-medium truncate flex items-center gap-2" title={`id: ${link.id}`}>
+                    {link.favicon && (
+                      <img src={link.favicon} alt="icon" className="w-4 h-4 shrink-0 rounded" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                    )}
+                    <span className="truncate">{link.text}</span>
+                  </div>
                   <div className="text-xs text-gray-500 truncate">{link.url}</div>
                 </div>
               </li>
@@ -365,63 +419,66 @@ export default function LinksPage() {
 
         {/* Groups (right) */}
         <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {groups.map((group) => (
-          <div
-            key={group.id}
-            className="bg-white dark:bg-gray-900 rounded-2xl shadow-md p-4"
-            onDragOver={onDragOverGroup}
-            onDrop={(e) => onDropToGroup(e, group.id)}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-semibold truncate pr-2">{group.name}</h4>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">{group.links.length} link</span>
-                <button
-                  type="button"
-                  onClick={() => removeGroup(group.id)}
-                  className="p-1.5 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
-                  aria-label="Grubu sil"
-                >
-                  <i className="pi pi-trash text-xs" />
-                </button>
+          {groups.map((group) => (
+            <div
+              key={group.id}
+              className="bg-white dark:bg-gray-900 rounded-2xl shadow-md p-4"
+              onDragOver={onDragOverGroup}
+              onDrop={(e) => onDropToGroup(e, group.id)}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold truncate pr-2">{group.name}</h4>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">{group.links.length} link</span>
+                  <button
+                    type="button"
+                    onClick={() => removeGroup(group.id)}
+                    className="p-1.5 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
+                    aria-label="Grubu sil"
+                  >
+                    <i className="pi pi-trash text-xs" />
+                  </button>
+                </div>
               </div>
-            </div>
-            <ul className="flex flex-col gap-2">
-              {group.links.map((link, idx) => (
-                <li key={link.id}
+              <ul className="flex flex-col gap-2">
+                {group.links.map((link, idx) => (
+                  <li key={link.id}
                     className="group flex items-center justify-between gap-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-2 cursor-move"
                     draggable
                     onDragStart={(e) => onDragStart(e, { linkId: link.id, from: 'group', fromGroupId: group.id })}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => onDropBeforeIndex(e, group.id, idx)}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <i className="pi pi-grip-vertical text-gray-400" />
-                    <div className="truncate">
-                      <div className="text-sm font-medium truncate" title={`id: ${link.id}`}>{link.text}</div>
-                      <a href={link.url} target="_blank" rel="noreferrer" className="text-xs text-[#2665D6] hover:underline truncate block">{link.url}</a>
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <i className="pi pi-grip-vertical text-gray-400" />
+                      <div className="truncate">
+                        <div className="text-sm font-medium truncate flex items-center gap-2" title={`id: ${link.id}`}>
+                          {link.favicon && (
+                            <img src={link.favicon} alt="icon" className="w-4 h-4 shrink-0 rounded" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                          )}
+                          <span className="truncate">{link.text}</span>
+                        </div>
+                        <a href={link.url} target="_blank" rel="noreferrer" className="text-xs text-[#2665D6] hover:underline truncate block">{link.url}</a>
+                      </div>
                     </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeLink(group.id, link.id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-xs px-2 py-1 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-                  >Sil</button>
-                </li>
-              ))}
-              {/* Drop at end */}
-              <li
-                className="h-8 rounded-md border border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center text-xs text-gray-400"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => onDropBeforeIndex(e, group.id, group.links.length)}
-              >Bırak</li>
-            </ul>
-          </div>
-        ))}
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); removeLink(group.id, link.id); }}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-xs px-2 py-1 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    >Sil</button>
+                  </li>
+                ))}
+                {/* Drop at end */}
+                <li
+                  className="h-8 rounded-md border border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center text-xs text-gray-400"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => onDropBeforeIndex(e, group.id, group.links.length)}
+                >Bırak</li>
+              </ul>
+            </div>
+          ))}
         </div>
       </div>
     </div>
   );
 }
-
-

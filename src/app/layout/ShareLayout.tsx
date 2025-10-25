@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
 import { Outlet } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 
-const THEME_KEY = "ui-theme"; // light | dark
-const SHARE_BG_KEY = "share-bg"; // css background string
+const THEME_KEY = "ui-theme";
+const SHARE_BG_KEY = "share-bg";
 
 export default function ShareLayout() {
   const prefersDark = useMemo(
@@ -29,7 +29,6 @@ export default function ShareLayout() {
   }, [theme]);
 
   useEffect(() => {
-    // sync when theme/bg changes elsewhere
     const onStorage = () => {
       const t = localStorage.getItem(THEME_KEY) as "light" | "dark" | null;
       if (t && t !== theme) setTheme(t);
@@ -41,7 +40,7 @@ export default function ShareLayout() {
   }, [theme]);
 
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: shareBg }}>
+    <div className="min-h-dvh flex flex-col bg-background-light dark:bg-background-dark">
       <header className="py-5 px-4 sm:px-6 flex justify-center">
         <div className="w-full max-w-3xl flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -55,8 +54,13 @@ export default function ShareLayout() {
       </header>
 
       <main className="flex-1 flex items-center justify-center px-4 py-6 sm:py-10">
-        <div className="w-full max-w-xl backdrop-blur-sm bg-white/85 dark:bg-gray-900/75 rounded-3xl shadow-2xl border border-white/50 dark:border-white/10 p-5 sm:p-8">
-          <Outlet />
+        <div className="relative w-full max-w-xl backdrop-blur-sm bg-white/85 dark:bg-gray-900/75 rounded-3xl shadow-2xl border border-white/50 dark:border-white/10 p-5 sm:p-8 overflow-hidden">
+          {/* Top banner only avatar-height and full card width */}
+          <div className="absolute inset-x-0 top-0 h-28 rounded-t-3xl" style={{ background: shareBg }} />
+          {/* Space below banner so content starts after it */}
+          <div className="relative z-10 pt-28">
+            <Outlet />
+          </div>
         </div>
       </main>
 
