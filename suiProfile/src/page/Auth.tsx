@@ -1,26 +1,14 @@
 import { useState, useEffect } from "react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useNavigate } from "react-router-dom";
-import { 
-  Box, 
-  Button, 
-  Card, 
-  Container, 
-  Flex, 
-  Heading, 
-  Text,
-} from "@radix-ui/themes";
-import { useSuiServices } from "../hooks/useSuiServices";
 
 export function Auth() {
   const account = useCurrentAccount();
   const navigate = useNavigate();
-  const { client, profileService } = useSuiServices();
   const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     if (account) {
-      // Zorunlu kayıt akışını kaldır: doğrudan dashboard'a yönlendir
       setChecking(true);
       setTimeout(() => {
         navigate("/dashboard");
@@ -29,134 +17,108 @@ export function Auth() {
     }
   }, [account, navigate]);
 
-  const checkUserProfile = async () => {};
-
   if (account) {
     return (
-      <Container size="2" py="8">
-        <Card size="4">
-          <Flex direction="column" gap="4" align="center" p="4">
-            <Heading size="6" align="center">
-              🎉 Hoş Geldiniz!
-            </Heading>
-            <Text align="center" color="gray">
-              Sui cüzdanınız başarıyla bağlandı
-            </Text>
-            <Box p="4" style={{ background: "var(--green-a3)", borderRadius: "8px", width: "100%" }}>
-              <Text size="2" weight="medium">
-                Cüzdan Adresi:
-              </Text>
-              <Text size="1" color="gray" style={{ wordBreak: "break-all" }}>
-                {account.address}
-              </Text>
-            </Box>
-            
-            {checking ? (
-              <Text color="gray">Yönlendiriliyor...</Text>
-            ) : null}
-          </Flex>
-        </Card>
-      </Container>
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-3xl border border-gray-200 dark:border-gray-800 p-8 text-center">
+            {/* Success Animation */}
+            <div className="mb-6">
+              <div className="w-20 h-20 mx-auto bg-lime-400 rounded-full flex items-center justify-center">
+                <span className="material-symbols-outlined text-black text-4xl">check</span>
+              </div>
+            </div>
+
+
+            {/* Wallet Address */}
+            <div className="bg-gray-50 dark:bg-[#0D0D0D] rounded-xl p-4 mb-6">
+              <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">WALLET ADDRESS</p>
+              <p className="text-xs text-gray-700 dark:text-gray-300 font-mono break-all">{account.address}</p>
+            </div>
+
+            {/* Loading */}
+            {checking && (
+              <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400">
+                <div className="w-4 h-4 border-2 border-lime-400 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-sm">Redirecting...</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     );
   }
 
-  const handleGoogleLogin = () => {
-    alert("Google OAuth yakında eklenecek!");
-  };
-
   return (
-    <Container size="3" py="9">
-      <Flex direction="column" align="center" gap="8">
-        <Box style={{ textAlign: "center" }}>
-          <Heading size="9" mb="3">
-            Walrus Linktree
-          </Heading>
-          <Text size="5" color="gray">
-            Web3 kimliğinizi yönetin
-          </Text>
-        </Box>
+    <div className="min-h-screen relative flex items-center justify-center p-6">
+      <div className="w-full max-w-xl pt-18 -mt-10">
 
-        <Card size="4" style={{ width: "100%", maxWidth: 450 }}>
-          <Flex direction="column" gap="4" p="5">
-            <Box style={{ textAlign: "center" }} mb="2">
-              <Heading size="5" mb="2">
-                Başlayın
-              </Heading>
-              <Text size="2" color="gray">
-                Devam etmek için cüzdanınızı bağlayın
-              </Text>
-            </Box>
+        {/* Main Card */}
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-3xl border border-gray-200 dark:border-gray-800 p-10">
+          {/* Connect Wallet Message */}
+          <div className="p-6 bg-gradient-to-br from-lime-400/10 to-emerald-500/10 rounded-2xl border-2 border-dashed border-lime-400/30 mb-6 text-center">
+            <div className="w-16 h-16 bg-lime-400/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <span className="material-symbols-outlined text-lime-600 dark:text-lime-400 text-4xl">account_balance_wallet</span>
+            </div>
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-2 font-medium">
+              Use the <strong className="text-lime-600 dark:text-lime-400">"Connect Wallet"</strong> button above
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Click the connect button in the top right corner to get started
+            </p>
+          </div>
 
-            <Box 
-              p="4" 
-              style={{ 
-                border: "2px dashed var(--accent-a6)", 
-                borderRadius: 12,
-                textAlign: "center",
-                background: "var(--accent-a2)",
-              }}
-            >
-              <Text size="6" style={{ display: "block", marginBottom: 12 }}>
-                🔗
-              </Text>
-              <Text size="2" color="gray" mb="2" style={{ display: "block" }}>
-                Yukarıdaki <strong>"Connect Wallet"</strong> butonunu kullanın
-              </Text>
-              <Text size="1" color="gray">
-                Sui Wallet, Suiet veya diğer Sui cüzdanlarınızla bağlanın
-              </Text>
-            </Box>
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200 dark:border-gray-800"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white dark:bg-[#1A1A1A] px-2 text-gray-500">Or</span>
+            </div>
+          </div>
 
-            <Box my="2">
-              <Flex align="center" gap="3">
-                <Box style={{ flex: 1, height: 1, background: "var(--gray-a5)" }} />
-                <Text size="2" color="gray">yakında</Text>
-                <Box style={{ flex: 1, height: 1, background: "var(--gray-a5)" }} />
-              </Flex>
-            </Box>
+          {/* Google Button (Coming Soon) */}
+          <button
+            disabled
+            className="w-full h-12 rounded-xl bg-gray-50 dark:bg-[#0D0D0D] border border-gray-200 dark:border-gray-800 text-gray-400 dark:text-gray-500 font-medium flex items-center justify-center gap-2 cursor-not-allowed opacity-60"
+          >
+            <span className="material-symbols-outlined">language</span>
+            <span>Continue with Google</span>
+            <span className="text-xs ml-auto">(Soon)</span>
+          </button>
+        </div>
 
-            <Button 
-              size="4" 
-              variant="outline"
-              onClick={handleGoogleLogin}
-              disabled
-              style={{ opacity: 0.5 }}
-            >
-              <Flex align="center" gap="2">
-                <span>🌐</span>
-                <span>Google ile Devam Et (Yakında)</span>
-              </Flex>
-            </Button>
+        {/* Info Cards */}
+        <div className="grid grid-cols-3 gap-3 mt-8">
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-gray-200 dark:border-gray-800 p-4 text-center">
+            <span className="material-symbols-outlined text-lime-400 text-2xl mb-2 block">shield</span>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Secure</p>
+          </div>
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-gray-200 dark:border-gray-800 p-4 text-center">
+            <span className="material-symbols-outlined text-lime-400 text-2xl mb-2 block">flash_on</span>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Fast</p>
+          </div>
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-gray-200 dark:border-gray-800 p-4 text-center">
+            <span className="material-symbols-outlined text-lime-400 text-2xl mb-2 block">lock</span>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Private</p>
+          </div>
+        </div>
 
-            <Text size="1" color="gray" style={{ textAlign: "center", marginTop: 8 }}>
-              Giriş yaparak{" "}
-              <Text as="span" weight="medium">
-                Kullanım Şartları
-              </Text>{" "}
-              ve{" "}
-              <Text as="span" weight="medium">
-                Gizlilik Politikası
-              </Text>
-              'nı kabul etmiş olursunuz.
-            </Text>
-          </Flex>
-        </Card>
-
-        <Card style={{ maxWidth: 450, width: "100%" }} variant="surface">
-          <Flex gap="3" align="start" p="4">
-            <Text size="5">💡</Text>
-            <Box>
-              <Text size="2" weight="medium" mb="1" style={{ display: "block" }}>
-                Sui Cüzdanı Nedir?
-              </Text>
-              <Text size="2" color="gray">
-                Sui blockchain üzerinde işlem yapmanızı sağlayan dijital cüzdanınız. 
-                Sui Wallet veya Suiet gibi cüzdan eklentilerini kullanabilirsiniz.
-              </Text>
-            </Box>
-          </Flex>
-        </Card>
-      </Flex>
-    </Container>
+        {/* Footer */}
+        <div className="text-center mt-8">
+          <p className="text-xs text-gray-500 dark:text-gray-500">
+            By continuing, you agree to our{" "}
+            <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+              Terms
+            </a>{" "}
+            and{" "}
+            <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+              Privacy Policy
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }

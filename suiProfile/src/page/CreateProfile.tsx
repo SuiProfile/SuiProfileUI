@@ -1,20 +1,6 @@
 import { useState, useEffect } from "react";
 import { useCurrentAccount, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
 import { useNavigate } from "react-router-dom";
-import { 
-  Box, 
-  Button, 
-  Card, 
-  Container, 
-  Flex, 
-  Heading, 
-  Text, 
-  TextField,
-  Callout,
-  Switch,
-  Select,
-  TextArea,
-} from "@radix-ui/themes";
 import { useSuiServices } from "../hooks/useSuiServices";
 
 interface Toast {
@@ -22,16 +8,23 @@ interface Toast {
   type: 'success' | 'error';
 }
 
-const THEMES = ["dark", "light", "blue", "green", "purple", "pink"];
+const THEMES = [
+  { value: "dark", label: "Dark", icon: "dark_mode" },
+  { value: "light", label: "Light", icon: "light_mode" },
+  { value: "blue", label: "Blue", icon: "water_drop" },
+  { value: "green", label: "Green", icon: "eco" },
+  { value: "purple", label: "Purple", icon: "palette" },
+  { value: "pink", label: "Pink", icon: "favorite" }
+];
 
 export function CreateProfile() {
   const account = useCurrentAccount();
   const navigate = useNavigate();
-  const { profileService, client } = useSuiServices();
+  const { profileService, client, walrusService } = useSuiServices();
   const { mutate: signAndExecute } = useSignAndExecuteTransaction();
   
   const [formData, setFormData] = useState({
-    username: "",      // 🆕 USERNAME EKLENDI
+    username: "",
     slug: "",
     avatarCid: "",
     bio: "",
@@ -44,6 +37,8 @@ export function CreateProfile() {
   const [error, setError] = useState("");
   const [toast, setToast] = useState<Toast | null>(null);
   const [myUsernames, setMyUsernames] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string>("");
   
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -53,7 +48,7 @@ export function CreateProfile() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!account || !formData.slug) return;
+    if (!account || !formData.slug || !formData.username) return;
 
     console.log("Creating profile:", formData);
 
@@ -62,7 +57,7 @@ export function CreateProfile() {
 
     try {
       const tx = profileService.createProfile({
-        username: formData.username,  // 🆕 USERNAME EKLENDI
+        username: formData.username,
         slug: formData.slug,
         avatarCid: formData.avatarCid,
         bio: formData.bio,
@@ -71,7 +66,6 @@ export function CreateProfile() {
         parentSlug: formData.parentSlug,
       });
 
-      // 🔍 DEBUG: Transaction'ı görün
       console.log("Real transaction:", tx);
 
       signAndExecute(
@@ -84,7 +78,6 @@ export function CreateProfile() {
             showToast("Profil başarıyla oluşturuldu!", "success");
             setLoading(false);
             
-            // Dashboard'a yönlendir
             setTimeout(() => {
               navigate("/dashboard");
             }, 1500);
@@ -107,20 +100,43 @@ export function CreateProfile() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    
+    try {
+      setUploading(true);
+      const cid = await walrusService.upload(file);
+      handleChange("avatarCid", cid);
+      showToast("Görsel yüklendi", "success");
+    } catch (err) {
+      console.error(err);
+      showToast("Yükleme başarısız", "error");
+      setAvatarPreview("");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   useEffect(() => {
     if (!account) {
       navigate("/");
     }
   }, [account, navigate]);
 
-  // Kullanıcı adlarını yükle ve dropdown önerisine çevir
   useEffect(() => {
     const load = async () => {
       if (!account) return;
       try {
         const list = await profileService.listMyUsernames(client, account.address);
         setMyUsernames(list);
-        // Eğer username alanı boşsa ve listede en az bir username varsa varsayılan seç
         if (!formData.username && list.length > 0) {
           setFormData(prev => ({ ...prev, username: list[0] }));
         }
@@ -136,209 +152,276 @@ export function CreateProfile() {
   }
 
   return (
-    <Container size="2" py="6">
+    <div className="min-h-screen bg-background-light dark:bg-background-dark flex items-center justify-center p-6">
       {/* Toast Notification */}
       {toast && (
-        <Box
-          style={{
-            position: "fixed",
-            left: "50%",
-            bottom: "36px",
-            transform: "translateX(-50%)",
-            zIndex: 9999,
-            minWidth: "200px",
-            maxWidth: "90vw",
-            padding: "12px 32px",
-            borderRadius: "999px",
-            background: toast.type === "error" ? "#ef4444" : "#22c55e",
-            color: "#fff",
-            fontWeight: 600,
-            boxShadow: "0 4px 32px 0 rgb(0 0 0 / 20%)",
-            textAlign: "center",
-          }}
+        <div
+          className={`fixed left-1/2 bottom-8 -translate-x-1/2 z-50 min-w-[280px] px-6 py-3.5 rounded-2xl font-semibold text-sm shadow-2xl ${
+            toast.type === "error" 
+              ? "bg-red-500 text-white" 
+              : "bg-lime-400 text-black"
+          }`}
         >
-          {toast.message}
-        </Box>
+          <div className="flex items-center justify-center gap-2">
+            <span className="material-symbols-outlined text-lg">
+              {toast.type === "error" ? "error" : "check_circle"}
+            </span>
+            {toast.message}
+          </div>
+        </div>
       )}
 
-      <Card size="4">
-        <form onSubmit={handleSubmit}>
-          <Flex direction="column" gap="5" p="5">
-            <Box>
-              <Heading size="6" mb="2">Yeni Profil Oluştur</Heading>
-              <Text color="gray">
+      {/* Main Card */}
+      <div className="w-full max-w-3xl">
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-3xl border border-gray-200 dark:border-gray-800 p-8 shadow-xl">
+          <form onSubmit={handleSubmit}>
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-lime-400 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <span className="material-symbols-outlined text-black text-3xl font-bold">add_circle</span>
+              </div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Yeni Profil Oluştur</h1>
+              <p className="text-gray-500 dark:text-gray-400">
                 Linktree profilinizi oluşturun ve linklerinizi paylaşın
-              </Text>
-            </Box>
+              </p>
+            </div>
 
+            {/* Error Message */}
             {error && (
-              <Callout.Root color="red">
-                <Callout.Text>{error}</Callout.Text>
-              </Callout.Root>
+              <div className="mb-6 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 flex items-start gap-3">
+                <span className="material-symbols-outlined text-red-600">error</span>
+                <span className="text-sm text-red-600 dark:text-red-400 flex-1">{error}</span>
+              </div>
             )}
 
-            {/* Username */}
-            <Box>
-              <Text as="label" size="2" weight="medium" mb="2" style={{ display: "block" }}>
-                Username * (Kayıtlı kullanıcı adınız)
-              </Text>
-              {myUsernames.length > 0 ? (
-                <Select.Root
-                  value={formData.username}
-                  onValueChange={(value) => handleChange("username", value)}
-                >
-                  <Select.Trigger style={{ width: "100%" }} />
-                  <Select.Content>
+            <div className="space-y-6">
+              {/* Avatar Upload Section */}
+              <div className="flex flex-col items-center gap-4 p-6 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-200 dark:border-gray-800">
+                <div className="relative">
+                  {avatarPreview || formData.avatarCid ? (
+                    <img
+                      src={avatarPreview || walrusService.buildUrl(formData.avatarCid)}
+                      alt="Avatar"
+                      className="w-24 h-24 rounded-2xl object-cover border-4 border-lime-400"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-2xl flex items-center justify-center">
+                      <span className="material-symbols-outlined text-gray-400 dark:text-gray-500 text-5xl">person</span>
+                    </div>
+                  )}
+                  {uploading && (
+                    <div className="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center">
+                      <div className="w-8 h-8 border-4 border-lime-400 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                </div>
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    disabled={uploading}
+                  />
+                  <div className="px-6 py-2.5 bg-lime-400/10 hover:bg-lime-400/20 text-lime-600 dark:text-lime-400 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 border border-lime-400/20">
+                    <span className="material-symbols-outlined text-lg">upload</span>
+                    {uploading ? "Yükleniyor..." : "Avatar Yükle"}
+                  </div>
+                </label>
+                <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                  PNG, JPG veya GIF - Maksimum 5MB
+                </p>
+              </div>
+
+              {/* Username Selection */}
+              <div>
+                <label className="text-sm font-semibold text-gray-900 dark:text-white mb-3 block flex items-center gap-2">
+                  <span className="material-symbols-outlined text-lg">account_circle</span>
+                  Kullanıcı Adı *
+                </label>
+                {myUsernames.length > 0 ? (
+                  <select
+                    className="w-full h-14 px-4 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white outline-none focus:border-lime-400 focus:ring-4 focus:ring-lime-400/20 transition-all duration-200 font-medium"
+                    value={formData.username}
+                    onChange={(e) => handleChange("username", e.target.value)}
+                    required
+                  >
                     {myUsernames.map((u) => (
-                      <Select.Item key={u} value={u}>@{u}</Select.Item>
+                      <option key={u} value={u}>@{u}</option>
                     ))}
-                  </Select.Content>
-                </Select.Root>
-              ) : (
-                <TextField.Root
-                  size="3"
-                  placeholder="kullanici-adi"
-                  value={formData.username}
-                  onChange={(e) => handleChange("username", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                  </select>
+                ) : (
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 font-medium">
+                      @
+                    </span>
+                    <input
+                      className="w-full h-14 pl-9 pr-4 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white outline-none focus:border-lime-400 focus:ring-4 focus:ring-lime-400/20 transition-all duration-200 font-medium"
+                      placeholder="kullanici-adi"
+                      value={formData.username}
+                      onChange={(e) => handleChange("username", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                      required
+                    />
+                  </div>
+                )}
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  Register ettiğiniz username'i seçin
+                </p>
+              </div>
+
+              {/* Slug */}
+              <div>
+                <label className="text-sm font-semibold text-gray-900 dark:text-white mb-3 block flex items-center gap-2">
+                  <span className="material-symbols-outlined text-lg">link</span>
+                  Profil Slug *
+                </label>
+                <input
+                  className="w-full h-14 px-4 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white outline-none focus:border-lime-400 focus:ring-4 focus:ring-lime-400/20 transition-all duration-200 font-medium"
+                  placeholder="main"
+                  value={formData.slug}
+                  onChange={(e) => handleChange("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
                   required
                 />
-              )}
-              <Text size="1" color="gray" mt="1" style={{ display: "block" }}>
-                Register ettiğiniz username'i seçin veya girin
-              </Text>
-            </Box>
+                <div className="mt-2 p-3 bg-lime-400/10 rounded-xl border border-lime-400/20">
+                  <p className="text-xs text-lime-600 dark:text-lime-400 font-medium flex items-center gap-2">
+                    <span className="material-symbols-outlined text-sm">link</span>
+                    Profil URL: {formData.username ? `/${formData.username}/${formData.slug || "<slug>"}` : "/<username>/<slug>"}
+                  </p>
+                </div>
+              </div>
 
-            {/* Slug */}
-            <Box>
-              <Text as="label" size="2" weight="medium" mb="2" style={{ display: "block" }}>
-                Profil Slug *
-              </Text>
-              <TextField.Root
-                size="3"
-                placeholder="main"
-                value={formData.slug}
-                onChange={(e) => handleChange("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-                required
-              />
-              <Text size="1" color="gray" mt="1" style={{ display: "block" }}>
-                Profil URL'iniz: {formData.username ? `/${formData.username}/${formData.slug}` : "/<username>/<slug>"}
-              </Text>
-            </Box>
+              {/* Bio */}
+              <div>
+                <label className="text-sm font-semibold text-gray-900 dark:text-white mb-3 block flex items-center gap-2">
+                  <span className="material-symbols-outlined text-lg">description</span>
+                  Biyografi
+                </label>
+                <textarea
+                  className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white outline-none focus:border-lime-400 focus:ring-4 focus:ring-lime-400/20 transition-all duration-200 resize-none"
+                  placeholder="Kendinizi tanıtın..."
+                  value={formData.bio}
+                  onChange={(e) => handleChange("bio", e.target.value)}
+                  rows={4}
+                />
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  {formData.bio.length}/500 karakter
+                </p>
+              </div>
 
-            {/* Bio */}
-            <Box>
-              <Text as="label" size="2" weight="medium" mb="2" style={{ display: "block" }}>
-                Biyografi
-              </Text>
-              <TextArea
-                size="3"
-                placeholder="Kendinizi tanıtın..."
-                value={formData.bio}
-                onChange={(e) => handleChange("bio", e.target.value)}
-                rows={3}
-              />
-            </Box>
-
-            {/* Avatar CID */}
-            <Box>
-              <Text as="label" size="2" weight="medium" mb="2" style={{ display: "block" }}>
-                Avatar CID (Walrus)
-              </Text>
-              <TextField.Root
-                size="3"
-                placeholder="Qm..."
-                value={formData.avatarCid}
-                onChange={(e) => handleChange("avatarCid", e.target.value)}
-              />
-              <Text size="1" color="gray" mt="1" style={{ display: "block" }}>
-                Walrus'ta saklanan avatar görselinizin CID'si
-              </Text>
-            </Box>
-
-            {/* Theme */}
-            <Box>
-              <Text as="label" size="2" weight="medium" mb="2" style={{ display: "block" }}>
-                Tema
-              </Text>
-              <Select.Root
-                value={formData.theme}
-                onValueChange={(value) => handleChange("theme", value)}
-              >
-                <Select.Trigger style={{ width: "100%" }} />
-                <Select.Content>
-                  {THEMES.map(theme => (
-                    <Select.Item key={theme} value={theme}>
-                      {theme.charAt(0).toUpperCase() + theme.slice(1)}
-                    </Select.Item>
+              {/* Theme Selection */}
+              <div>
+                <label className="text-sm font-semibold text-gray-900 dark:text-white mb-3 block flex items-center gap-2">
+                  <span className="material-symbols-outlined text-lg">palette</span>
+                  Tema Seçimi
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {THEMES.map((theme) => (
+                    <button
+                      key={theme.value}
+                      type="button"
+                      onClick={() => handleChange("theme", theme.value)}
+                      className={`p-4 rounded-2xl border-2 transition-all duration-200 ${
+                        formData.theme === theme.value
+                          ? "border-lime-400 bg-lime-400/10"
+                          : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className={`material-symbols-outlined text-2xl ${
+                          formData.theme === theme.value ? "text-lime-600 dark:text-lime-400" : "text-gray-400"
+                        }`}>
+                          {theme.icon}
+                        </span>
+                        <span className={`font-medium text-sm ${
+                          formData.theme === theme.value 
+                            ? "text-lime-600 dark:text-lime-400" 
+                            : "text-gray-700 dark:text-gray-300"
+                        }`}>
+                          {theme.label}
+                        </span>
+                      </div>
+                    </button>
                   ))}
-                </Select.Content>
-              </Select.Root>
-            </Box>
+                </div>
+              </div>
 
-            {/* Is Category */}
-            <Box>
-              <Flex align="center" gap="2">
-                <Switch
-                  checked={formData.isCategory}
-                  onCheckedChange={(checked) => handleChange("isCategory", checked)}
-                />
-                <Box>
-                  <Text size="2" weight="medium" style={{ display: "block" }}>
-                    Kategori Profili
-                  </Text>
-                  <Text size="1" color="gray">
-                    Ana profilinize bağlı bir kategori profili
-                  </Text>
-                </Box>
-              </Flex>
-            </Box>
+              {/* Category Profile Toggle */}
+              <div className="p-5 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-200 dark:border-gray-800">
+                <label className="flex items-start gap-4 cursor-pointer">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={formData.isCategory}
+                      onChange={(e) => handleChange("isCategory", e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-300 dark:bg-gray-700 rounded-full peer peer-checked:bg-lime-400 transition-colors"></div>
+                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Kategori Profili</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Ana profilinize bağlı bir kategori profili oluşturun
+                    </p>
+                  </div>
+                </label>
+              </div>
 
-            {/* Parent Slug (if category) */}
-            {formData.isCategory && (
-              <Box>
-                <Text as="label" size="2" weight="medium" mb="2" style={{ display: "block" }}>
-                  Ana Profil Slug
-                </Text>
-                <TextField.Root
-                  size="3"
-                  placeholder="kullanici-adi-main"
-                  value={formData.parentSlug}
-                  onChange={(e) => handleChange("parentSlug", e.target.value)}
-                />
-                <Text size="1" color="gray" mt="1" style={{ display: "block" }}>
-                  Bu kategorinin bağlı olduğu ana profil
-                </Text>
-              </Box>
-            )}
+              {/* Parent Slug (if category) */}
+              {formData.isCategory && (
+                <div className="p-5 bg-amber-500/10 rounded-2xl border border-amber-500/30">
+                  <label className="text-sm font-semibold text-amber-900 dark:text-amber-300 mb-3 block flex items-center gap-2">
+                    <span className="material-symbols-outlined text-lg">account_tree</span>
+                    Ana Profil Slug
+                  </label>
+                  <input
+                    className="w-full h-14 px-4 rounded-2xl border-2 border-amber-500/30 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 transition-all duration-200 font-medium"
+                    placeholder="kullanici-adi-main"
+                    value={formData.parentSlug}
+                    onChange={(e) => handleChange("parentSlug", e.target.value)}
+                  />
+                  <p className="mt-2 text-xs text-amber-700 dark:text-amber-400">
+                    Bu kategorinin bağlı olduğu ana profil slug'ı
+                  </p>
+                </div>
+              )}
 
-            {/* Actions */}
-            <Flex gap="2">
-              <Button 
-                size="3" 
-                type="submit" 
-                disabled={loading || !formData.username || !formData.slug}
-                style={{
-                  background: "linear-gradient(135deg, #2665D6 0%, #E6291B 100%)",
-                  color: "white",
-                  cursor: (loading || !formData.username || !formData.slug) ? "not-allowed" : "pointer",
-                }}
-              >
-                {loading ? "Oluşturuluyor..." : "Profil Oluştur"}
-              </Button>
-              <Button 
-                size="3"
-                type="button"
-                variant="ghost" 
-                onClick={() => navigate("/")}
-                disabled={loading}
-              >
-                İptal
-              </Button>
-            </Flex>
-          </Flex>
-        </form>
-      </Card>
-    </Container>
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-3 pt-4">
+                <button
+                  type="submit"
+                  disabled={loading || !formData.username || !formData.slug}
+                  className={`h-14 rounded-2xl font-semibold text-base transition-all duration-200 flex items-center justify-center gap-2 ${
+                    (loading || !formData.username || !formData.slug)
+                      ? "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed"
+                      : "bg-lime-400 text-black hover:bg-lime-300 shadow-lg shadow-lime-400/30"
+                  }`}
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                      Oluşturuluyor...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined">add_circle</span>
+                      Profil Oluştur
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/")}
+                  disabled={loading}
+                  className="h-14 rounded-2xl border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 disabled:opacity-50"
+                >
+                  İptal
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   );
 }
-

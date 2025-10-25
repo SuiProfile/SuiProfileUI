@@ -30,7 +30,7 @@ export function EditProfile() {
   const { profileId } = useParams<{ profileId: string }>();
   const account = useCurrentAccount();
   const navigate = useNavigate();
-  const { client, profileService } = useSuiServices();
+  const { client, profileService, walrusService } = useSuiServices();
   const { mutate: signAndExecute } = useSignAndExecuteTransaction();
   
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -38,6 +38,7 @@ export function EditProfile() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState<Toast | null>(null);
+  const [uploading, setUploading] = useState(false);
   
   const [formData, setFormData] = useState({
     bio: "",
@@ -291,7 +292,7 @@ export function EditProfile() {
                   />
                 </Box>
 
-                {/* Avatar CID */}
+                {/* Avatar CID + Upload */}
                 <Box>
                   <Text as="label" size="2" weight="medium" mb="2" style={{ display: "block" }}>
                     Avatar CID (Walrus)
@@ -302,6 +303,36 @@ export function EditProfile() {
                     onChange={(e) => setFormData(prev => ({ ...prev, avatarCid: e.target.value }))}
                     placeholder="Qm..."
                   />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        setUploading(true);
+                        const cid = await walrusService.upload(file);
+                        setFormData(prev => ({ ...prev, avatarCid: cid }));
+                        showToast("Görsel yüklendi", "success");
+                      } catch (err) {
+                        console.error(err);
+                        showToast("Yükleme başarısız", "error");
+                      } finally {
+                        setUploading(false);
+                      }
+                    }}
+                    style={{ marginTop: 8 }}
+                  />
+                  {formData.avatarCid && (
+                    <Text size="1" color="gray" mt="1" style={{ display: "block" }}>
+                      Önizleme: {walrusService.buildUrl(formData.avatarCid)}
+                    </Text>
+                  )}
+                  {uploading && (
+                    <Text size="1" color="gray" mt="1" style={{ display: "block" }}>
+                      Yükleniyor...
+                    </Text>
+                  )}
                 </Box>
 
                 {/* Theme */}

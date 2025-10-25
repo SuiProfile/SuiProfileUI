@@ -17,6 +17,8 @@ const { networkConfig, useNetworkVariable, useNetworkVariables } =
         upgradeCapId: import.meta.env.VITE_UPGRADE_CAP_ID,
         initialSharedVersion: import.meta.env.VITE_INITIAL_SHARED_VERSION,
         clockId: import.meta.env.VITE_CLOCK_ID,
+        walrusAggregatorBaseUrl: import.meta.env.VITE_WALRUS_AGGREGATOR_BASE_URL,
+        walrusUploadUrl: import.meta.env.VITE_WALRUS_UPLOAD_URL,
       },
     },
     mainnet: {

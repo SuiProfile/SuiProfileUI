@@ -1,16 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSignAndExecuteTransaction } from "@mysten/dapp-kit";
-import { 
-  Box, 
-  Button, 
-  Card, 
-  Container, 
-  Flex, 
-  Heading, 
-  Text,
-  Avatar,
-} from "@radix-ui/themes";
 import { useSuiServices } from "../hooks/useSuiServices";
 import { ProfileData } from "../services/profileService";
 
@@ -29,41 +19,28 @@ export function PublicProfile() {
       navigate("/");
       return;
     }
-
     loadProfile();
   }, [username, slug]);
 
   const loadProfile = async () => {
     if (!username || !slug) return;
-
     try {
       setLoading(true);
-      
-      console.log("🔍 Resolving profile:", username, slug);
-      
-      // Username ve slug'dan profil ID'sini çöz
       const profileId = await profileService.resolveSlug(client, username, slug);
-      
       if (!profileId) {
         setError("Profil bulunamadı");
         setLoading(false);
         return;
       }
-
-      console.log("✅ Profile ID resolved:", profileId);
-
-      // Profil detaylarını getir
       const data = await profileService.getProfile(client, profileId);
-      
       if (!data) {
         setError("Profil yüklenemedi");
         setLoading(false);
         return;
       }
-
       setProfile(data);
-    } catch (error) {
-      console.error("❌ Error loading profile:", error);
+    } catch (e) {
+      console.error(e);
       setError("Profil yüklenemedi");
     } finally {
       setLoading(false);
@@ -72,155 +49,101 @@ export function PublicProfile() {
 
   const handleLinkClick = async (label: string, url: string) => {
     if (!profile) return;
-
-    // İstatistik kaydı için transaction oluştur
     try {
       const statsId = await statisticsService.resolveStats(client, profile.id);
-      
       if (statsId) {
         const tx = statisticsService.trackClick(statsId, label, window.location.hostname);
-        
-        // Tıklama kaydını arka planda gönder
         signAndExecute(
           { transaction: tx },
           {
-            onSuccess: () => console.log("Click tracked"),
-            onError: (error) => console.error("Error tracking click:", error),
+            onSuccess: () => {},
+            onError: () => {},
           }
         );
       }
-    } catch (error) {
-      console.error("Error tracking click:", error);
-    }
-
-    // Link'e yönlendir
+    } catch {}
     if (url.startsWith("/")) {
-      // Internal link
       navigate(url);
     } else {
-      // External link
       window.open(url, "_blank");
     }
   };
 
   if (loading) {
     return (
-      <Container size="2" py="9">
-        <Flex justify="center" align="center" style={{ minHeight: 400 }}>
-          <Text size="4">Yükleniyor...</Text>
-        </Flex>
-      </Container>
+      <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
+        <p className="text-lg">Yükleniyor...</p>
+      </div>
     );
   }
 
   if (error || !profile) {
     return (
-      <Container size="2" py="9">
-        <Card>
-          <Flex direction="column" gap="4" align="center" p="6">
-            <Text size="6">😕</Text>
-            <Heading size="5">{error || "Profil bulunamadı"}</Heading>
-            <Button onClick={() => navigate("/")}>Ana Sayfaya Dön</Button>
-          </Flex>
-        </Card>
-      </Container>
+      <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark p-6">
+        <div className="max-w-md w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-black/10 p-8 text-center">
+          <div className="text-4xl mb-2">😕</div>
+          <h2 className="text-xl font-bold mb-2">{error || "Profil bulunamadı"}</h2>
+          <button
+            onClick={() => navigate("/")}
+            className="mt-2 h-10 px-4 rounded-full bg-primary text-accent font-bold"
+          >
+            Ana Sayfaya Dön
+          </button>
+        </div>
+      </div>
     );
   }
 
-  // Tema renklerini dinamik olarak ayarla
-  const themeColors: Record<string, string> = {
-    dark: "var(--gray-12)",
-    light: "var(--gray-1)",
-    blue: "var(--blue-9)",
-    green: "var(--green-9)",
-    purple: "var(--purple-9)",
-    pink: "var(--pink-9)",
-  };
-
-  const backgroundColor = themeColors[profile.theme] || themeColors.dark;
+  const avatarUrl = profile.avatarCid
+    ? `https://aggregator.walrus-testnet.walrus.space/v1/${profile.avatarCid}`
+    : undefined;
 
   return (
-    <Box 
-      style={{ 
-        minHeight: "100vh",
-        background: `linear-gradient(180deg, ${backgroundColor} 0%, var(--gray-1) 100%)`,
-        paddingTop: 60,
-        paddingBottom: 60,
-      }}
-    >
-      <Container size="2">
-        <Flex direction="column" gap="6" align="center">
-          {/* Avatar */}
-          <Avatar
-            size="8"
-            src={profile.avatarCid ? `https://aggregator.walrus-testnet.walrus.space/v1/${profile.avatarCid}` : undefined}
-            fallback={username?.charAt(0).toUpperCase() || "?"}
-            style={{ width: 120, height: 120 }}
-          />
-
-          {/* Profile Info */}
-          <Box style={{ textAlign: "center" }}>
-            <Heading size="8" mb="2">@{username}</Heading>
-            <Text size="3" color="gray" mb="3" style={{ display: "block" }}>
-              {slug}
-            </Text>
-            {profile.bio && (
-              <Text size="4" color="gray" style={{ maxWidth: 500, display: "block" }}>
-                {profile.bio}
-              </Text>
-            )}
-          </Box>
-
-          {/* Links */}
-          <Flex direction="column" gap="3" style={{ width: "100%", maxWidth: 600 }}>
-            {profile.links.size === 0 ? (
-              <Card>
-                <Flex justify="center" p="6">
-                  <Text color="gray">Henüz link eklenmemiş</Text>
-                </Flex>
-              </Card>
+    <div className="min-h-screen bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark">
+      <div className="max-w-2xl mx-auto px-4 py-10">
+        {/* Header / hero */}
+        <div className="flex flex-col items-center text-center">
+          <div className="w-28 h-28 rounded-full ring-4 ring-white dark:ring-black/30 overflow-hidden bg-accent text-white flex items-center justify-center text-3xl">
+            {avatarUrl ? (
+              // eslint-disable-next-line jsx-a11y/alt-text
+              <img src={avatarUrl} className="w-full h-full object-cover" />
             ) : (
-              Array.from(profile.links).map(([label, url]) => (
-                <Card 
-                  key={label}
-                  style={{ cursor: "pointer" }}
-                  onClick={() => handleLinkClick(label, url)}
-                >
-                  <Flex 
-                    align="center" 
-                    justify="between" 
-                    p="4"
-                    style={{
-                      transition: "transform 0.2s",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "translateY(0)";
-                    }}
-                  >
-                    <Text size="4" weight="medium">
-                      {label}
-                    </Text>
-                    <Text size="2" color="gray">
-                      {url.startsWith("/") ? "→" : "↗"}
-                    </Text>
-                  </Flex>
-                </Card>
-              ))
+              (username?.charAt(0).toUpperCase() || "?")
             )}
-          </Flex>
+          </div>
+          <h1 className="mt-4 text-3xl font-black tracking-tight">@{username}</h1>
+          <p className="text-gray-500 dark:text-gray-400">{slug}</p>
+          {profile.bio && (
+            <p className="mt-3 text-gray-600 dark:text-gray-300 max-w-xl">{profile.bio}</p>
+          )}
+        </div>
 
-          {/* Footer */}
-          <Box style={{ textAlign: "center", marginTop: 40 }}>
-            <Text size="1" color="gray">
-              Powered by Walrus Linktree
-            </Text>
-          </Box>
-        </Flex>
-      </Container>
-    </Box>
+        {/* Links */}
+        <div className="mt-8 space-y-3">
+          {profile.links.size === 0 ? (
+            <div className="rounded-xl border-2 border-dashed border-primary/50 dark:border-primary/50 p-10 text-center">
+              <p className="text-gray-600 dark:text-primary/80">Henüz link eklenmemiş</p>
+            </div>
+          ) : (
+            Array.from(profile.links).map(([label, url]) => (
+              <button
+                key={label}
+                onClick={() => handleLinkClick(label, url)}
+                className="w-full text-left rounded-xl bg-white/70 dark:bg-black/10 border border-gray-200 dark:border-gray-800 px-5 py-4 hover:shadow-md hover:border-primary transition flex items-center justify-between"
+              >
+                <span className="text-base font-medium">{label}</span>
+                <span className="text-sm text-gray-500">{url.startsWith("/") ? "→" : "↗"}</span>
+              </button>
+            ))
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-10 text-center">
+          <p className="text-xs text-gray-500">Powered by Walrus Linktree</p>
+        </div>
+      </div>
+    </div>
   );
 }
 

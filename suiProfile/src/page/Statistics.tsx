@@ -1,17 +1,6 @@
-import { useEffect, useState } from "react";
-import { useCurrentAccount } from "@mysten/dapp-kit";
+import { useEffect, useMemo, useState } from "react";
+import { useCurrentAccount, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
 import { useNavigate, useParams } from "react-router-dom";
-import { 
-  Box, 
-  Button, 
-  Card, 
-  Container, 
-  Flex, 
-  Heading, 
-  Text,
-  Separator,
-  Table,
-} from "@radix-ui/themes";
 import { useSuiServices } from "../hooks/useSuiServices";
 import { StatisticsData } from "../services/statisticsService";
 import { ProfileData } from "../services/profileService";
@@ -21,11 +10,13 @@ export function Statistics() {
   const account = useCurrentAccount();
   const navigate = useNavigate();
   const { client, profileService, statisticsService } = useSuiServices();
+  const { mutate: signAndExecute } = useSignAndExecuteTransaction();
   
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [stats, setStats] = useState<StatisticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     if (!account || !profileId) {
@@ -72,205 +63,193 @@ export function Statistics() {
     }
   };
 
+  const handleCreateStats = async () => {
+    if (!profileId) return;
+    try {
+      setCreating(true);
+      const tx = statisticsService.createStatistics(profileId);
+      signAndExecute(
+        { transaction: tx },
+        {
+          onSuccess: async () => {
+            await loadData();
+            setCreating(false);
+          },
+          onError: () => setCreating(false),
+        }
+      );
+    } catch {
+      setCreating(false);
+    }
+  };
+
   if (!account || !profileId) {
     return null;
   }
 
   if (loading) {
     return (
-      <Container size="3" py="8">
-        <Flex justify="center" align="center" style={{ minHeight: 400 }}>
-          <Text size="4">İstatistikler yükleniyor...</Text>
-        </Flex>
-      </Container>
+      <div className="p-8">
+        <div className="min-h-[300px] flex items-center justify-center">
+          <p className="text-lg">İstatistikler yükleniyor...</p>
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Container size="2" py="8">
-        <Card>
-          <Flex direction="column" gap="4" align="center" p="6">
-            <Heading size="5" color="red">{error}</Heading>
-            <Button onClick={() => navigate("/dashboard")}>
-              Dashboard'a Dön
-            </Button>
-          </Flex>
-        </Card>
-      </Container>
+      <div className="max-w-3xl mx-auto p-6">
+        <div className="rounded-xl border border-red-400/30 bg-red-500/10 p-8 text-center">
+          <h2 className="text-red-500 font-bold mb-3">{error}</h2>
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="h-10 px-4 rounded-full bg-primary text-accent font-bold"
+          >
+            Dashboard'a Dön
+          </button>
+        </div>
+      </div>
     );
   }
 
   const linkClicksArray = stats ? Array.from(stats.linkClicks).sort((a, b) => b[1] - a[1]) : [];
   const sourceClicksArray = stats ? Array.from(stats.sourceClicks).sort((a, b) => b[1] - a[1]) : [];
+  const totalClicks = stats?.totalClicks || 0;
 
   return (
-    <Container size="3" py="6">
-      <Flex direction="column" gap="6">
-        {/* Header */}
-        <Flex justify="between" align="center">
-          <Box>
-            <Heading size="7" mb="1">İstatistikler</Heading>
-            <Text color="gray">/{profile?.slug}</Text>
-          </Box>
-          <Flex gap="2">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate(`/profile/${profileId}/edit`)}
-            >
-              Profili Düzenle
-            </Button>
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate("/dashboard")}
-            >
-              ← Dashboard
-            </Button>
-          </Flex>
-        </Flex>
+    <div className="max-w-7xl mx-auto p-4 md:p-8">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight">İstatistikler</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">/{profile?.slug}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate(`/profile/${profileId}/edit`)}
+            className="h-10 px-4 rounded-full border border-primary text-primary text-sm font-semibold hover:bg-primary hover:text-accent transition"
+          >
+            Profili Düzenle
+          </button>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="h-10 px-4 rounded-full bg-transparent text-sm font-semibold hover:bg-gray-200 dark:hover:bg-primary/20 transition"
+          >
+            ← Dashboard
+          </button>
+        </div>
+      </div>
 
-        {!stats ? (
-          <Card>
-            <Flex direction="column" gap="4" align="center" p="6">
-              <Text size="5">📊</Text>
-              <Heading size="5">İstatistik Bulunamadı</Heading>
-              <Text color="gray" align="center">
-                Bu profil için henüz istatistik objesi oluşturulmamış.
-                İstatistikleri görmek için önce bir istatistik objesi oluşturmalısınız.
-              </Text>
-            </Flex>
-          </Card>
-        ) : (
-          <>
-            {/* Overview Stats */}
-            <Card>
-              <Flex gap="6" p="5" wrap="wrap">
-                <Box style={{ flex: 1, minWidth: 150 }}>
-                  <Text size="2" color="gray" mb="1" style={{ display: "block" }}>
-                    Toplam Tıklama
-                  </Text>
-                  <Heading size="8">{stats.totalClicks}</Heading>
-                </Box>
-                <Separator orientation="vertical" />
-                <Box style={{ flex: 1, minWidth: 150 }}>
-                  <Text size="2" color="gray" mb="1" style={{ display: "block" }}>
-                    Benzersiz Ziyaretçi
-                  </Text>
-                  <Heading size="8">{stats.uniqueVisitors}</Heading>
-                </Box>
-                <Separator orientation="vertical" />
-                <Box style={{ flex: 1, minWidth: 150 }}>
-                  <Text size="2" color="gray" mb="1" style={{ display: "block" }}>
-                    Link Sayısı
-                  </Text>
-                  <Heading size="8">{stats.linkClicks.size}</Heading>
-                </Box>
-                <Separator orientation="vertical" />
-                <Box style={{ flex: 1, minWidth: 150 }}>
-                  <Text size="2" color="gray" mb="1" style={{ display: "block" }}>
-                    Kaynak Sayısı
-                  </Text>
-                  <Heading size="8">{stats.sourceClicks.size}</Heading>
-                </Box>
-              </Flex>
-            </Card>
+      {!stats ? (
+        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-black/10 p-8 text-center">
+          <div className="text-4xl mb-2">📊</div>
+          <h2 className="text-xl font-bold mb-2">İstatistik Bulunamadı</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+            Bu profil için henüz istatistik objesi oluşturulmamış.
+          </p>
+          <button
+            onClick={handleCreateStats}
+            disabled={creating}
+            className="h-11 px-5 rounded-full bg-primary text-accent font-bold shadow-lg shadow-primary/30 hover:bg-opacity-90 transition disabled:opacity-60"
+          >
+            {creating ? 'Oluşturuluyor...' : 'İstatistik Oluştur'}
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* Overview cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 mb-8">
+            <div className="flex flex-col gap-2 rounded-xl p-5 bg-accent text-white shadow-lg border border-gray-200 dark:border-gray-700">
+              <p className="opacity-80 text-sm">Toplam Tıklama</p>
+              <p className="text-3xl md:text-4xl font-bold">{stats.totalClicks}</p>
+            </div>
+            <div className="flex flex-col gap-2 rounded-xl p-5 bg-accent text-white shadow-lg border border-gray-200 dark:border-gray-700">
+              <p className="opacity-80 text-sm">Benzersiz Ziyaretçi</p>
+              <p className="text-3xl md:text-4xl font-bold">{stats.uniqueVisitors}</p>
+            </div>
+            <div className="flex flex-col gap-2 rounded-xl p-5 bg-accent text-white shadow-lg border border-gray-200 dark:border-gray-700">
+              <p className="opacity-80 text-sm">Link Sayısı</p>
+              <p className="text-3xl md:text-4xl font-bold">{stats.linkClicks.size}</p>
+            </div>
+            <div className="flex flex-col gap-2 rounded-xl p-5 bg-accent text-white shadow-lg border border-gray-200 dark:border-gray-700">
+              <p className="opacity-80 text-sm">Kaynak Sayısı</p>
+              <p className="text-3xl md:text-4xl font-bold">{stats.sourceClicks.size}</p>
+            </div>
+          </div>
 
-            {/* Link Clicks Table */}
-            <Card>
-              <Box p="4">
-                <Heading size="5" mb="4">Link Tıklamaları</Heading>
-                {linkClicksArray.length === 0 ? (
-                  <Text color="gray">Henüz tıklama kaydı yok</Text>
-                ) : (
-                  <Table.Root variant="surface">
-                    <Table.Header>
-                      <Table.Row>
-                        <Table.ColumnHeaderCell>Link</Table.ColumnHeaderCell>
-                        <Table.ColumnHeaderCell>Tıklama Sayısı</Table.ColumnHeaderCell>
-                        <Table.ColumnHeaderCell>Yüzde</Table.ColumnHeaderCell>
-                      </Table.Row>
-                    </Table.Header>
-                    <Table.Body>
-                      {linkClicksArray.map(([label, count]) => {
-                        const percentage = stats.totalClicks > 0 
-                          ? ((count / stats.totalClicks) * 100).toFixed(1) 
-                          : 0;
-                        
-                        return (
-                          <Table.Row key={label}>
-                            <Table.Cell>
-                              <Text weight="medium">{label}</Text>
-                            </Table.Cell>
-                            <Table.Cell>
-                              <Text>{count}</Text>
-                            </Table.Cell>
-                            <Table.Cell>
-                              <Text color="gray">{percentage}%</Text>
-                            </Table.Cell>
-                          </Table.Row>
-                        );
-                      })}
-                    </Table.Body>
-                  </Table.Root>
-                )}
-              </Box>
-            </Card>
-
-            {/* Source Clicks Table */}
-            <Card>
-              <Box p="4">
-                <Heading size="5" mb="4">Kaynak Bazlı Tıklamalar</Heading>
-                {sourceClicksArray.length === 0 ? (
-                  <Text color="gray">Henüz kaynak verisi yok</Text>
-                ) : (
-                  <Table.Root variant="surface">
-                    <Table.Header>
-                      <Table.Row>
-                        <Table.ColumnHeaderCell>Kaynak</Table.ColumnHeaderCell>
-                        <Table.ColumnHeaderCell>Tıklama Sayısı</Table.ColumnHeaderCell>
-                        <Table.ColumnHeaderCell>Yüzde</Table.ColumnHeaderCell>
-                      </Table.Row>
-                    </Table.Header>
-                    <Table.Body>
-                      {sourceClicksArray.map(([source, count]) => {
-                        const percentage = stats.totalClicks > 0 
-                          ? ((count / stats.totalClicks) * 100).toFixed(1) 
-                          : 0;
-                        
-                        return (
-                          <Table.Row key={source}>
-                            <Table.Cell>
-                              <Text weight="medium">{source || "Direct"}</Text>
-                            </Table.Cell>
-                            <Table.Cell>
-                              <Text>{count}</Text>
-                            </Table.Cell>
-                            <Table.Cell>
-                              <Text color="gray">{percentage}%</Text>
-                            </Table.Cell>
-                          </Table.Row>
-                        );
-                      })}
-                    </Table.Body>
-                  </Table.Root>
-                )}
-              </Box>
-            </Card>
-
-            {/* Last Click Info */}
-            {stats.lastClickMs > 0 && (
-              <Card variant="surface">
-                <Flex align="center" gap="2" p="3">
-                  <Text size="2" color="gray">
-                    Son tıklama: {new Date(stats.lastClickMs).toLocaleString("tr-TR")}
-                  </Text>
-                </Flex>
-              </Card>
+          {/* Link clicks */}
+          <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-black/10 p-4 mb-6">
+            <h3 className="text-lg font-bold mb-4">Link Tıklamaları</h3>
+            {linkClicksArray.length === 0 ? (
+              <p className="text-sm text-gray-600">Henüz tıklama kaydı yok</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-500">
+                      <th className="py-2 pr-4">Link</th>
+                      <th className="py-2 pr-4">Tıklama</th>
+                      <th className="py-2 pr-4">Yüzde</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {linkClicksArray.map(([label, count]) => {
+                      const pct = totalClicks > 0 ? ((count / totalClicks) * 100).toFixed(1) : '0.0';
+                      return (
+                        <tr key={label} className="border-t border-gray-200 dark:border-gray-800">
+                          <td className="py-2 pr-4 font-medium">{label}</td>
+                          <td className="py-2 pr-4">{count}</td>
+                          <td className="py-2 pr-4 text-gray-500">{pct}%</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             )}
-          </>
-        )}
-      </Flex>
-    </Container>
+          </div>
+
+          {/* Source clicks */}
+          <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-black/10 p-4">
+            <h3 className="text-lg font-bold mb-4">Kaynak Bazlı Tıklamalar</h3>
+            {sourceClicksArray.length === 0 ? (
+              <p className="text-sm text-gray-600">Henüz kaynak verisi yok</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-500">
+                      <th className="py-2 pr-4">Kaynak</th>
+                      <th className="py-2 pr-4">Tıklama</th>
+                      <th className="py-2 pr-4">Yüzde</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sourceClicksArray.map(([source, count]) => {
+                      const pct = totalClicks > 0 ? ((count / totalClicks) * 100).toFixed(1) : '0.0';
+                      return (
+                        <tr key={source} className="border-t border-gray-200 dark:border-gray-800">
+                          <td className="py-2 pr-4 font-medium">{source || 'Direct'}</td>
+                          <td className="py-2 pr-4">{count}</td>
+                          <td className="py-2 pr-4 text-gray-500">{pct}%</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {stats.lastClickMs > 0 && (
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-black/10 p-3 mt-6">
+              <p className="text-sm text-gray-600">Son tıklama: {new Date(stats.lastClickMs).toLocaleString('tr-TR')}</p>
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 }
 
