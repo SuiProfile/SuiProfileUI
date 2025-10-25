@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCurrentAccount, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -31,6 +31,8 @@ export function RegisterUsername() {
   const [checking, setChecking] = useState(false);
   const [available, setAvailable] = useState<boolean | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
+  const [myUsernames, setMyUsernames] = useState<string[]>([]);
+  const maxUsernames = 3;
   
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -68,6 +70,10 @@ export function RegisterUsername() {
 
   const handleRegister = async () => {
     if (!account || !username || username.length < 3) return;
+    if (myUsernames.length >= maxUsernames) {
+      showToast("En fazla 3 kullanıcı adı ekleyebilirsiniz", "error");
+      return;
+    }
 
     console.log("Registering username:", username);
 
@@ -82,18 +88,30 @@ export function RegisterUsername() {
           transaction: tx,
         },
         {
-          onSuccess: () => {
+          onSuccess: async () => {
             console.log("✅ Username registered successfully");
             showToast("Kullanıcı adı başarıyla kaydedildi!", "success");
             setSuccess(true);
             setLoading(false);
+            // Listeyi güncelle
+            try {
+              const list = await profileService.listMyUsernames(client, account.address);
+              setMyUsernames(list);
+            } catch {}
             setTimeout(() => {
               navigate("/profile/create");
             }, 2000);
           },
           onError: (error) => {
             console.error("❌ Error registering username:", error);
-            showToast("Kullanıcı adı kaydedilemedi", "error");
+            const msg = (error as any)?.message || "";
+            if (msg.includes("EUsernameLimitReached") || msg.toLowerCase().includes("limit") ) {
+              showToast("En fazla 3 kullanıcı adı ekleyebilirsiniz", "error");
+            } else if (msg.includes("EUsernameAlreadyTaken")) {
+              showToast("Kullanıcı adı alınmış", "error");
+            } else {
+              showToast("Kullanıcı adı kaydedilemedi", "error");
+            }
             setLoading(false);
           },
         }
@@ -109,6 +127,21 @@ export function RegisterUsername() {
     navigate("/");
     return null;
   }
+
+  // Kullanıcının mevcut kullanıcı adlarını yükle
+  // İlk render ve cüzdan değişiminde
+  useEffect(() => {
+    const load = async () => {
+      if (!account) return;
+      try {
+        const list = await profileService.listMyUsernames(client, account.address);
+        setMyUsernames(list);
+      } catch (e) {
+        console.warn("Kullanıcı adları listelenemedi (boş olabilir)", e);
+      }
+    };
+    load();
+  }, [account, client, profileService]);
 
   return (
     <Container size="2" py="8">
@@ -147,6 +180,24 @@ export function RegisterUsername() {
             </Text>
           </Box>
 
+          {/* Mevcut kullanıcı adlarım */}
+          <Box>
+            <Text size="2" weight="medium" mb="2" style={{ display: "block" }}>
+              Kullanıcı Adlarım ({myUsernames.length}/{maxUsernames})
+            </Text>
+            {myUsernames.length === 0 ? (
+              <Text size="2" color="gray">Henüz kullanıcı adınız yok</Text>
+            ) : (
+              <Flex gap="2" wrap="wrap">
+                {myUsernames.map((n) => (
+                  <Box key={n} style={{ padding: "6px 10px", borderRadius: 8, background: "var(--accent-a3)", fontSize: 12 }}>
+                    @{n}
+                  </Box>
+                ))}
+              </Flex>
+            )}
+          </Box>
+
           {error && (
             <Callout.Root color="red">
               <Callout.Text>{error}</Callout.Text>
@@ -170,7 +221,7 @@ export function RegisterUsername() {
               placeholder="ornek-kullanici"
               value={username}
               onChange={(e) => handleUsernameChange(e.target.value)}
-              disabled={loading}
+              disabled={loading || myUsernames.length >= maxUsernames}
             />
             <Flex align="center" gap="2" mt="2">
               {checking && (
@@ -181,6 +232,9 @@ export function RegisterUsername() {
               )}
               {available === false && (
                 <Text size="1" color="red">✗ Bu kullanıcı adı alınmış</Text>
+              )}
+              {myUsernames.length >= maxUsernames && (
+                <Text size="1" color="red">Limit dolu (3)</Text>
               )}
             </Flex>
             <Text size="1" color="gray" mt="2" style={{ display: "block" }}>
@@ -199,11 +253,11 @@ export function RegisterUsername() {
             <Button 
               size="3" 
               onClick={handleRegister}
-              disabled={loading || !username || username.length < 3 || available !== true}
+              disabled={loading || !username || username.length < 3 || available !== true || myUsernames.length >= maxUsernames}
               style={{
                 background: "linear-gradient(135deg, #2665D6 0%, #E6291B 100%)",
                 color: "white",
-                cursor: (loading || !username || username.length < 3 || available !== true) ? "not-allowed" : "pointer",
+                cursor: (loading || !username || username.length < 3 || available !== true || myUsernames.length >= maxUsernames) ? "not-allowed" : "pointer",
               }}
             >
               {loading ? "Kaydediliyor..." : "Kullanıcı Adını Kaydet"}

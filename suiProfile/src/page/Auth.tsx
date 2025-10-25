@@ -17,41 +17,19 @@ export function Auth() {
   const navigate = useNavigate();
   const { client, profileService } = useSuiServices();
   const [checking, setChecking] = useState(false);
-  const [hasProfiles, setHasProfiles] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (account) {
-      checkUserProfile();
-    } else {
-      setHasProfiles(null);
+      // Zorunlu kayıt akışını kaldır: doğrudan dashboard'a yönlendir
+      setChecking(true);
+      setTimeout(() => {
+        navigate("/dashboard");
+        setChecking(false);
+      }, 800);
     }
-  }, [account]);
+  }, [account, navigate]);
 
-  const checkUserProfile = async () => {
-    if (!account) return;
-
-    setChecking(true);
-    try {
-      const profileIds = await profileService.getUserProfiles(client, account.address);
-      
-      if (profileIds.length > 0) {
-        // Kullanıcının profili var, dashboard'a yönlendir
-        setHasProfiles(true);
-        setTimeout(() => navigate("/dashboard"), 1500);
-      } else {
-        // Kullanıcının profili yok, username kaydına yönlendir
-        setHasProfiles(false);
-        setTimeout(() => navigate("/register-username"), 1500);
-      }
-    } catch (error) {
-      console.error("Error checking profiles:", error);
-      // Hata durumunda yine de register-username'e yönlendir
-      setHasProfiles(false);
-      setTimeout(() => navigate("/register-username"), 1500);
-    } finally {
-      setChecking(false);
-    }
-  };
+  const checkUserProfile = async () => {};
 
   if (account) {
     return (
@@ -74,11 +52,7 @@ export function Auth() {
             </Box>
             
             {checking ? (
-              <Text color="gray">Profil kontrol ediliyor...</Text>
-            ) : hasProfiles === true ? (
-              <Text color="green">Dashboard'a yönlendiriliyorsunuz...</Text>
-            ) : hasProfiles === false ? (
-              <Text color="blue">Kullanıcı kaydına yönlendiriliyorsunuz...</Text>
+              <Text color="gray">Yönlendiriliyor...</Text>
             ) : null}
           </Flex>
         </Card>

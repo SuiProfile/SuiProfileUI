@@ -40,6 +40,49 @@ export class ProfileService {
   ) {}
 
   /**
+   * Owner'a ait kullanıcı adlarını listeler (OwnerUsernamesKey dynamic field)
+   */
+  async listMyUsernames(client: SuiClient, owner: string): Promise<string[]> {
+    try {
+      const resp = await client.getDynamicFieldObject({
+        parentId: this.registryId,
+        name: {
+          type: `${this.packageId}::profile::OwnerUsernamesKey`,
+          value: { owner },
+        },
+      });
+
+      const content = resp.data?.content as any;
+      if (!content || content.dataType !== "moveObject") return [];
+
+      // Field<OwnerUsernamesKey, vector<string>> yapısında value alanını çek
+      const value = content.fields?.value;
+
+      if (Array.isArray(value)) {
+        return value as string[];
+      }
+
+      // Alternatif temsil (nadiren): { fields: { contents: [...] }}
+      if (value?.fields?.contents && Array.isArray(value.fields.contents)) {
+        return value.fields.contents as string[];
+      }
+
+      return [];
+    } catch (error) {
+      // Dynamic field yoksa boş liste döneriz (kullanıcı hiç username eklememiş)
+      return [];
+    }
+  }
+
+  /**
+   * Owner'a ait username sayısını döner (UI için hızlı sayaç)
+   */
+  async usernamesCount(client: SuiClient, owner: string): Promise<number> {
+    const list = await this.listMyUsernames(client, owner);
+    return list.length;
+  }
+
+  /**
    * Username'i kayıt eder (claim eder)
    */
   registerUsername(username: string): Transaction {

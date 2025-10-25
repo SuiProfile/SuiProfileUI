@@ -27,7 +27,7 @@ const THEMES = ["dark", "light", "blue", "green", "purple", "pink"];
 export function CreateProfile() {
   const account = useCurrentAccount();
   const navigate = useNavigate();
-  const { profileService } = useSuiServices();
+  const { profileService, client } = useSuiServices();
   const { mutate: signAndExecute } = useSignAndExecuteTransaction();
   
   const [formData, setFormData] = useState({
@@ -43,6 +43,7 @@ export function CreateProfile() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState<Toast | null>(null);
+  const [myUsernames, setMyUsernames] = useState<string[]>([]);
   
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -112,6 +113,24 @@ export function CreateProfile() {
     }
   }, [account, navigate]);
 
+  // Kullanıcı adlarını yükle ve dropdown önerisine çevir
+  useEffect(() => {
+    const load = async () => {
+      if (!account) return;
+      try {
+        const list = await profileService.listMyUsernames(client, account.address);
+        setMyUsernames(list);
+        // Eğer username alanı boşsa ve listede en az bir username varsa varsayılan seç
+        if (!formData.username && list.length > 0) {
+          setFormData(prev => ({ ...prev, username: list[0] }));
+        }
+      } catch (e) {
+        console.warn("Kullanıcı adları alınamadı", e);
+      }
+    };
+    load();
+  }, [account, client, profileService]);
+
   if (!account) {
     return null;
   }
@@ -163,15 +182,29 @@ export function CreateProfile() {
               <Text as="label" size="2" weight="medium" mb="2" style={{ display: "block" }}>
                 Username * (Kayıtlı kullanıcı adınız)
               </Text>
-              <TextField.Root
-                size="3"
-                placeholder="kullanici-adi"
-                value={formData.username}
-                onChange={(e) => handleChange("username", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-                required
-              />
+              {myUsernames.length > 0 ? (
+                <Select.Root
+                  value={formData.username}
+                  onValueChange={(value) => handleChange("username", value)}
+                >
+                  <Select.Trigger style={{ width: "100%" }} />
+                  <Select.Content>
+                    {myUsernames.map((u) => (
+                      <Select.Item key={u} value={u}>@{u}</Select.Item>
+                    ))}
+                  </Select.Content>
+                </Select.Root>
+              ) : (
+                <TextField.Root
+                  size="3"
+                  placeholder="kullanici-adi"
+                  value={formData.username}
+                  onChange={(e) => handleChange("username", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                  required
+                />
+              )}
               <Text size="1" color="gray" mt="1" style={{ display: "block" }}>
-                Register ettiğiniz username'i girin
+                Register ettiğiniz username'i seçin veya girin
               </Text>
             </Box>
 

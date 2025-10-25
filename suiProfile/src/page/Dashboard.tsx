@@ -20,6 +20,7 @@ export function Dashboard() {
   const navigate = useNavigate();
   const { client, profileService } = useSuiServices();
   const [profiles, setProfiles] = useState<ProfileData[]>([]);
+  const [myUsernames, setMyUsernames] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasUsername, setHasUsername] = useState<boolean | null>(null);
 
@@ -37,6 +38,11 @@ export function Dashboard() {
 
     try {
       setLoading(true);
+      // Kullanıcı adlarını çek
+      try {
+        const list = await profileService.listMyUsernames(client, account.address);
+        setMyUsernames(list);
+      } catch {}
       const profileIds = await profileService.getUserProfiles(client, account.address);
       
       const profilesData = await Promise.all(
@@ -69,11 +75,7 @@ export function Dashboard() {
     );
   }
 
-  if (hasUsername === false) {
-    // Kullanıcı profili yok, kayıt sayfasına yönlendir
-    navigate("/register-username");
-    return null;
-  }
+  // Zorunlu kayıt akışı kaldırıldı: hasUsername false olsa da dashboard gösterilir
 
   return (
     <Container size="3" py="6">
@@ -119,80 +121,112 @@ export function Dashboard() {
           </Flex>
         </Card>
 
-        {/* Profiles List */}
+        {/* Kullanıcı Adlarım */}
+        <Card>
+          <Flex direction="column" p="4" gap="2">
+            <Text size="2" color="gray">Kullanıcı Adlarım</Text>
+            {myUsernames.length === 0 ? (
+              <Text size="2" color="gray">Henüz kullanıcı adınız yok. <span style={{ textDecoration: 'underline', cursor: 'pointer' }} onClick={() => navigate('/register-username')}>Şimdi ekleyin</span>.</Text>
+            ) : (
+              <Flex gap="2" wrap="wrap">
+                {myUsernames.map(u => (
+                  <Box key={u} style={{ padding: "6px 10px", borderRadius: 8, background: "var(--accent-a3)", fontSize: 12 }}>
+                    @{u}
+                  </Box>
+                ))}
+              </Flex>
+            )}
+          </Flex>
+        </Card>
+
+        {/* Profiles grouped by username */}
         <Box>
           <Heading size="5" mb="4">Profilleriniz</Heading>
-          {profiles.length === 0 ? (
+          {myUsernames.length === 0 ? (
             <Card>
               <Flex direction="column" gap="3" align="center" p="6">
                 <Text size="5">📝</Text>
-                <Text color="gray">Henüz profil oluşturmadınız</Text>
-                <Button onClick={() => navigate("/profile/create")}>
-                  İlk Profilini Oluştur
+                <Text color="gray">Henüz kullanıcı adınız yok</Text>
+                <Button onClick={() => navigate("/register-username")}>
+                  Kullanıcı Adı Ekle
                 </Button>
               </Flex>
             </Card>
           ) : (
-            <Flex direction="column" gap="3">
-              {profiles.map((profile) => (
-                <Card key={profile.id}>
-                  <Flex p="4" gap="4" align="center">
-                    {/* Avatar */}
-                    <Box 
-                      style={{ 
-                        width: 60, 
-                        height: 60, 
-                        borderRadius: 8,
-                        background: "var(--accent-a3)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 24,
-                      }}
-                    >
-                      {profile.avatarCid ? "🖼️" : "👤"}
-                    </Box>
-
-                    {/* Info */}
-                    <Flex direction="column" gap="1" style={{ flex: 1 }}>
-                      <Flex align="center" gap="2">
-                        <Heading size="4">/{profile.slug}</Heading>
-                        {profile.isCategory && (
-                          <Badge color="blue">Kategori</Badge>
-                        )}
+            <Flex direction="column" gap="5">
+              {myUsernames.map((uname) => {
+                const items = profiles.filter(p => p.baseUsername === uname);
+                return (
+                  <Card key={uname}>
+                    <Flex direction="column" p="4" gap="3">
+                      <Flex align="center" justify="between">
+                        <Heading size="4">@{uname}</Heading>
+                        <Button size="2" onClick={() => navigate("/profile/create")}>+ Profil Oluştur</Button>
                       </Flex>
-                      <Text size="2" color="gray">
-                        {profile.bio || "Bio eklenmemiş"}
-                      </Text>
-                      <Text size="1" color="gray">
-                        {profile.links.size} link • Tema: {profile.theme}
-                      </Text>
+                      {items.length === 0 ? (
+                        <Text size="2" color="gray">Bu kullanıcı adı altında profil yok</Text>
+                      ) : (
+                        <Flex direction="column" gap="3">
+                          {items.map((profile) => (
+                            <Card key={profile.id}>
+                              <Flex p="4" gap="4" align="center">
+                                <Box 
+                                  style={{ 
+                                    width: 60, 
+                                    height: 60, 
+                                    borderRadius: 8,
+                                    background: "var(--accent-a3)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: 24,
+                                  }}
+                                >
+                                  {profile.avatarCid ? "🖼️" : "👤"}
+                                </Box>
+                                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                                  <Flex align="center" gap="2">
+                                    <Heading size="4">/{profile.slug}</Heading>
+                                    {profile.isCategory && (
+                                      <Badge color="blue">Kategori</Badge>
+                                    )}
+                                  </Flex>
+                                  <Text size="2" color="gray">
+                                    {profile.bio || "Bio eklenmemiş"}
+                                  </Text>
+                                  <Text size="1" color="gray">
+                                    {profile.links.size} link • Tema: {profile.theme}
+                                  </Text>
+                                </Flex>
+                                <Flex gap="2">
+                                  <Button 
+                                    variant="soft" 
+                                    onClick={() => navigate(`/profile/${profile.id}/edit`)}
+                                  >
+                                    Düzenle
+                                  </Button>
+                                  <Button 
+                                    variant="outline"
+                                    onClick={() => navigate(`/${profile.slug}`)}
+                                  >
+                                    Görüntüle
+                                  </Button>
+                                  <Button 
+                                    variant="ghost"
+                                    onClick={() => navigate(`/profile/${profile.id}/stats`)}
+                                  >
+                                    📊
+                                  </Button>
+                                </Flex>
+                              </Flex>
+                            </Card>
+                          ))}
+                        </Flex>
+                      )}
                     </Flex>
-
-                    {/* Actions */}
-                    <Flex gap="2">
-                      <Button 
-                        variant="soft" 
-                        onClick={() => navigate(`/profile/${profile.id}/edit`)}
-                      >
-                        Düzenle
-                      </Button>
-                      <Button 
-                        variant="outline"
-                        onClick={() => navigate(`/${profile.slug}`)}
-                      >
-                        Görüntüle
-                      </Button>
-                      <Button 
-                        variant="ghost"
-                        onClick={() => navigate(`/profile/${profile.id}/stats`)}
-                      >
-                        📊
-                      </Button>
-                    </Flex>
-                  </Flex>
-                </Card>
-              ))}
+                  </Card>
+                );
+              })}
             </Flex>
           )}
         </Box>
