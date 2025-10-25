@@ -186,9 +186,10 @@ export function Dashboard() {
                             </button>
                             <button
                               onClick={() => navigate(`/profile/${profile.id}/stats`)}
-                              className="h-9 px-3 rounded-full bg-transparent text-sm font-semibold hover:bg-gray-200 dark:hover:bg-primary/20 transition"
+                              className="h-9 px-3 rounded-full bg-transparent text-sm font-semibold hover:bg-gray-200 dark:hover:bg-primary/20 transition flex items-center gap-1"
                             >
-                              📊
+                              <span className="material-symbols-outlined text-base">analytics</span>
+                              İstatistik
                             </button>
                           </div>
                         </div>

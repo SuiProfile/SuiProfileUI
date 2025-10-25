@@ -4,6 +4,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useSuiServices } from "../hooks/useSuiServices";
 import { StatisticsData } from "../services/statisticsService";
 import { ProfileData } from "../services/profileService";
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+
+const CHART_COLORS = ['#a3e635', '#84cc16', '#65a30d', '#4d7c0f', '#3f6212', '#365314'];
 
 export function Statistics() {
   const { profileId } = useParams<{ profileId: string }>();
@@ -33,7 +36,6 @@ export function Statistics() {
     try {
       setLoading(true);
 
-      // Profil bilgilerini yükle
       const profileData = await profileService.getProfile(client, profileId);
       
       if (!profileData) {
@@ -48,7 +50,6 @@ export function Statistics() {
 
       setProfile(profileData);
 
-      // İstatistikleri yükle
       const statsId = await statisticsService.resolveStats(client, profileId);
       
       if (statsId) {
@@ -83,6 +84,26 @@ export function Statistics() {
     }
   };
 
+  // Chart data preparation
+  const linkClicksData = useMemo(() => {
+    if (!stats) return [];
+    return Array.from(stats.linkClicks)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([name, value]) => ({ name, clicks: value }));
+  }, [stats]);
+
+  const sourceClicksData = useMemo(() => {
+    if (!stats) return [];
+    return Array.from(stats.sourceClicks)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, value]) => ({ 
+        name: name || 'Direct', 
+        value,
+        percentage: stats.totalClicks > 0 ? ((value / stats.totalClicks) * 100).toFixed(1) : 0
+      }));
+  }, [stats]);
+
   if (!account || !profileId) {
     return null;
   }
@@ -91,7 +112,10 @@ export function Statistics() {
     return (
       <div className="p-8">
         <div className="min-h-[300px] flex items-center justify-center">
-          <p className="text-lg">İstatistikler yükleniyor...</p>
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-lime-400 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-lg text-gray-500 dark:text-gray-400">İstatistikler yükleniyor...</p>
+          </div>
         </div>
       </div>
     );
@@ -100,11 +124,12 @@ export function Statistics() {
   if (error) {
     return (
       <div className="max-w-3xl mx-auto p-6">
-        <div className="rounded-xl border border-red-400/30 bg-red-500/10 p-8 text-center">
-          <h2 className="text-red-500 font-bold mb-3">{error}</h2>
+        <div className="rounded-3xl border border-red-500/30 bg-red-500/10 p-8 text-center">
+          <span className="material-symbols-outlined text-red-500 text-6xl mb-4 block">error</span>
+          <h2 className="text-red-500 text-xl font-bold mb-3">{error}</h2>
           <button
             onClick={() => navigate("/dashboard")}
-            className="h-10 px-4 rounded-full bg-primary text-accent font-bold"
+            className="h-12 px-6 rounded-2xl bg-lime-400 text-black font-semibold hover:bg-lime-300 transition-all"
           >
             Dashboard'a Dön
           </button>
@@ -113,138 +138,286 @@ export function Statistics() {
     );
   }
 
-  const linkClicksArray = stats ? Array.from(stats.linkClicks).sort((a, b) => b[1] - a[1]) : [];
-  const sourceClicksArray = stats ? Array.from(stats.sourceClicks).sort((a, b) => b[1] - a[1]) : [];
   const totalClicks = stats?.totalClicks || 0;
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight">İstatistikler</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">/{profile?.slug}</p>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">İstatistikler</h1>
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-lime-400 text-sm">link</span>
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-mono">/{profile?.slug}</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(`/profile/${profileId}/edit`)}
-            className="h-10 px-4 rounded-full border border-primary text-primary text-sm font-semibold hover:bg-primary hover:text-accent transition"
+            className="h-11 px-5 rounded-xl border-2 border-lime-400 text-lime-600 dark:text-lime-400 text-sm font-semibold hover:bg-lime-400/10 transition-all flex items-center gap-2"
           >
+            <span className="material-symbols-outlined text-lg">edit</span>
             Profili Düzenle
           </button>
           <button
             onClick={() => navigate('/dashboard')}
-            className="h-10 px-4 rounded-full bg-transparent text-sm font-semibold hover:bg-gray-200 dark:hover:bg-primary/20 transition"
+            className="h-11 px-5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-all flex items-center gap-2"
           >
-            ← Dashboard
+            <span className="material-symbols-outlined text-lg">arrow_back</span>
+            Dashboard
           </button>
         </div>
       </div>
 
       {!stats ? (
-        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-black/10 p-8 text-center">
-          <div className="text-4xl mb-2">📊</div>
-          <h2 className="text-xl font-bold mb-2">İstatistik Bulunamadı</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-            Bu profil için henüz istatistik objesi oluşturulmamış.
+        <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A] p-12 text-center">
+          <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-lime-400/20 to-emerald-500/20 rounded-full flex items-center justify-center">
+            <span className="material-symbols-outlined text-lime-600 dark:text-lime-400 text-6xl">analytics</span>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">İstatistik Bulunamadı</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+            Bu profil için henüz istatistik objesi oluşturulmamış. İstatistikleri takip etmeye başlamak için oluşturun.
           </p>
           <button
             onClick={handleCreateStats}
             disabled={creating}
-            className="h-11 px-5 rounded-full bg-primary text-accent font-bold shadow-lg shadow-primary/30 hover:bg-opacity-90 transition disabled:opacity-60"
+            className="h-14 px-8 rounded-2xl bg-lime-400 text-black font-semibold hover:bg-lime-300 transition-all disabled:opacity-60 flex items-center gap-2 mx-auto"
           >
-            {creating ? 'Oluşturuluyor...' : 'İstatistik Oluştur'}
+            {creating ? (
+              <>
+                <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                Oluşturuluyor...
+              </>
+            ) : (
+              <>
+                <span className="material-symbols-outlined">add_chart</span>
+                İstatistik Oluştur
+              </>
+            )}
           </button>
         </div>
       ) : (
         <>
           {/* Overview cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 mb-8">
-            <div className="flex flex-col gap-2 rounded-xl p-5 bg-accent text-white shadow-lg border border-gray-200 dark:border-gray-700">
-              <p className="opacity-80 text-sm">Toplam Tıklama</p>
-              <p className="text-3xl md:text-4xl font-bold">{stats.totalClicks}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="bg-gradient-to-br from-lime-400 to-lime-500 rounded-3xl p-6 text-black shadow-xl shadow-lime-400/20">
+              <div className="flex items-start justify-between mb-4">
+                <span className="material-symbols-outlined text-4xl opacity-80">mouse</span>
+                <div className="px-3 py-1 bg-black/10 rounded-full text-xs font-bold">TOTAL</div>
+              </div>
+              <p className="text-5xl font-bold mb-1">{stats.totalClicks.toLocaleString()}</p>
+              <p className="text-sm opacity-80 font-medium">Toplam Tıklama</p>
             </div>
-            <div className="flex flex-col gap-2 rounded-xl p-5 bg-accent text-white shadow-lg border border-gray-200 dark:border-gray-700">
-              <p className="opacity-80 text-sm">Benzersiz Ziyaretçi</p>
-              <p className="text-3xl md:text-4xl font-bold">{stats.uniqueVisitors}</p>
+
+            <div className="bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-3xl p-6 text-black shadow-xl shadow-emerald-400/20">
+              <div className="flex items-start justify-between mb-4">
+                <span className="material-symbols-outlined text-4xl opacity-80">group</span>
+                <div className="px-3 py-1 bg-black/10 rounded-full text-xs font-bold">UNIQUE</div>
+              </div>
+              <p className="text-5xl font-bold mb-1">{stats.uniqueVisitors.toLocaleString()}</p>
+              <p className="text-sm opacity-80 font-medium">Benzersiz Ziyaretçi</p>
             </div>
-            <div className="flex flex-col gap-2 rounded-xl p-5 bg-accent text-white shadow-lg border border-gray-200 dark:border-gray-700">
-              <p className="opacity-80 text-sm">Link Sayısı</p>
-              <p className="text-3xl md:text-4xl font-bold">{stats.linkClicks.size}</p>
+
+            <div className="bg-gradient-to-br from-blue-400 to-blue-500 rounded-3xl p-6 text-white shadow-xl shadow-blue-400/20">
+              <div className="flex items-start justify-between mb-4">
+                <span className="material-symbols-outlined text-4xl opacity-80">link</span>
+                <div className="px-3 py-1 bg-white/20 rounded-full text-xs font-bold">LINKS</div>
+              </div>
+              <p className="text-5xl font-bold mb-1">{stats.linkClicks.size}</p>
+              <p className="text-sm opacity-80 font-medium">Aktif Link Sayısı</p>
             </div>
-            <div className="flex flex-col gap-2 rounded-xl p-5 bg-accent text-white shadow-lg border border-gray-200 dark:border-gray-700">
-              <p className="opacity-80 text-sm">Kaynak Sayısı</p>
-              <p className="text-3xl md:text-4xl font-bold">{stats.sourceClicks.size}</p>
+
+            <div className="bg-gradient-to-br from-purple-400 to-purple-500 rounded-3xl p-6 text-white shadow-xl shadow-purple-400/20">
+              <div className="flex items-start justify-between mb-4">
+                <span className="material-symbols-outlined text-4xl opacity-80">language</span>
+                <div className="px-3 py-1 bg-white/20 rounded-full text-xs font-bold">SOURCES</div>
+              </div>
+              <p className="text-5xl font-bold mb-1">{stats.sourceClicks.size}</p>
+              <p className="text-sm opacity-80 font-medium">Farklı Kaynak</p>
             </div>
           </div>
 
-          {/* Link clicks */}
-          <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-black/10 p-4 mb-6">
-            <h3 className="text-lg font-bold mb-4">Link Tıklamaları</h3>
-            {linkClicksArray.length === 0 ? (
-              <p className="text-sm text-gray-600">Henüz tıklama kaydı yok</p>
-            ) : (
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Link Clicks Bar Chart */}
+            <div className="bg-white dark:bg-[#1A1A1A] rounded-3xl border border-gray-200 dark:border-gray-800 p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-lime-400/20 rounded-xl flex items-center justify-center">
+                  <span className="material-symbols-outlined text-lime-600 dark:text-lime-400">bar_chart</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Link Performansı</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">En çok tıklanan linkler</p>
+                </div>
+              </div>
+              
+              {linkClicksData.length === 0 ? (
+                <div className="h-[300px] flex items-center justify-center">
+                  <p className="text-gray-400 dark:text-gray-600">Henüz veri yok</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={linkClicksData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fill: '#6b7280', fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#1A1A1A', 
+                        border: '1px solid #374151',
+                        borderRadius: '12px',
+                        color: '#fff'
+                      }}
+                    />
+                    <Bar dataKey="clicks" fill="#a3e635" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+
+            {/* Source Clicks Pie Chart */}
+            <div className="bg-white dark:bg-[#1A1A1A] rounded-3xl border border-gray-200 dark:border-gray-800 p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-purple-400/20 rounded-xl flex items-center justify-center">
+                  <span className="material-symbols-outlined text-purple-600 dark:text-purple-400">pie_chart</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Kaynak Dağılımı</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Trafik kaynakları</p>
+                </div>
+              </div>
+              
+              {sourceClicksData.length === 0 ? (
+                <div className="h-[300px] flex items-center justify-center">
+                  <p className="text-gray-400 dark:text-gray-600">Henüz veri yok</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={sourceClicksData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percentage }) => `${name}: ${percentage}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {sourceClicksData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#1A1A1A', 
+                        border: '1px solid #374151',
+                        borderRadius: '12px',
+                        color: '#fff'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+
+          {/* Detailed Tables */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Link Clicks Table */}
+            <div className="bg-white dark:bg-[#1A1A1A] rounded-3xl border border-gray-200 dark:border-gray-800 p-6">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-lime-400">format_list_numbered</span>
+                Detaylı Link İstatistikleri
+              </h3>
               <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-gray-500">
-                      <th className="py-2 pr-4">Link</th>
-                      <th className="py-2 pr-4">Tıklama</th>
-                      <th className="py-2 pr-4">Yüzde</th>
+                <table className="w-full text-sm">
+                  <thead className="border-b border-gray-200 dark:border-gray-800">
+                    <tr className="text-left">
+                      <th className="py-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Link</th>
+                      <th className="py-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Tıklama</th>
+                      <th className="py-3 font-semibold text-gray-600 dark:text-gray-400">Oran</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {linkClicksArray.map(([label, count]) => {
-                      const pct = totalClicks > 0 ? ((count / totalClicks) * 100).toFixed(1) : '0.0';
-                      return (
-                        <tr key={label} className="border-t border-gray-200 dark:border-gray-800">
-                          <td className="py-2 pr-4 font-medium">{label}</td>
-                          <td className="py-2 pr-4">{count}</td>
-                          <td className="py-2 pr-4 text-gray-500">{pct}%</td>
-                        </tr>
-                      );
-                    })}
+                    {Array.from(stats.linkClicks)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([label, count]) => {
+                        const pct = totalClicks > 0 ? ((count / totalClicks) * 100).toFixed(1) : '0.0';
+                        return (
+                          <tr key={label} className="border-b border-gray-100 dark:border-gray-800">
+                            <td className="py-3 pr-4 font-medium text-gray-900 dark:text-white">{label}</td>
+                            <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{count}</td>
+                            <td className="py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden max-w-[60px]">
+                                  <div className="h-full bg-lime-400 rounded-full" style={{ width: `${pct}%` }}></div>
+                                </div>
+                                <span className="text-xs text-gray-500 dark:text-gray-400 min-w-[40px]">{pct}%</span>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>
-            )}
-          </div>
+            </div>
 
-          {/* Source clicks */}
-          <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-black/10 p-4">
-            <h3 className="text-lg font-bold mb-4">Kaynak Bazlı Tıklamalar</h3>
-            {sourceClicksArray.length === 0 ? (
-              <p className="text-sm text-gray-600">Henüz kaynak verisi yok</p>
-            ) : (
+            {/* Source Clicks Table */}
+            <div className="bg-white dark:bg-[#1A1A1A] rounded-3xl border border-gray-200 dark:border-gray-800 p-6">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-purple-400">source</span>
+                Kaynak Bazlı Detaylar
+              </h3>
               <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-gray-500">
-                      <th className="py-2 pr-4">Kaynak</th>
-                      <th className="py-2 pr-4">Tıklama</th>
-                      <th className="py-2 pr-4">Yüzde</th>
+                <table className="w-full text-sm">
+                  <thead className="border-b border-gray-200 dark:border-gray-800">
+                    <tr className="text-left">
+                      <th className="py-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Kaynak</th>
+                      <th className="py-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Tıklama</th>
+                      <th className="py-3 font-semibold text-gray-600 dark:text-gray-400">Oran</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {sourceClicksArray.map(([source, count]) => {
-                      const pct = totalClicks > 0 ? ((count / totalClicks) * 100).toFixed(1) : '0.0';
-                      return (
-                        <tr key={source} className="border-t border-gray-200 dark:border-gray-800">
-                          <td className="py-2 pr-4 font-medium">{source || 'Direct'}</td>
-                          <td className="py-2 pr-4">{count}</td>
-                          <td className="py-2 pr-4 text-gray-500">{pct}%</td>
-                        </tr>
-                      );
-                    })}
+                    {Array.from(stats.sourceClicks)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([source, count]) => {
+                        const pct = totalClicks > 0 ? ((count / totalClicks) * 100).toFixed(1) : '0.0';
+                        return (
+                          <tr key={source} className="border-b border-gray-100 dark:border-gray-800">
+                            <td className="py-3 pr-4 font-medium text-gray-900 dark:text-white">{source || 'Direct'}</td>
+                            <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">{count}</td>
+                            <td className="py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden max-w-[60px]">
+                                  <div className="h-full bg-purple-400 rounded-full" style={{ width: `${pct}%` }}></div>
+                                </div>
+                                <span className="text-xs text-gray-500 dark:text-gray-400 min-w-[40px]">{pct}%</span>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>
-            )}
+            </div>
           </div>
 
+          {/* Last Click Info */}
           {stats.lastClickMs > 0 && (
-            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-black/10 p-3 mt-6">
-              <p className="text-sm text-gray-600">Son tıklama: {new Date(stats.lastClickMs).toLocaleString('tr-TR')}</p>
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 flex items-center gap-3">
+              <span className="material-symbols-outlined text-gray-400">schedule</span>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                <strong className="text-gray-900 dark:text-white">Son tıklama:</strong> {new Date(stats.lastClickMs).toLocaleString('tr-TR')}
+              </p>
             </div>
           )}
         </>
@@ -252,4 +425,3 @@ export function Statistics() {
     </div>
   );
 }
-

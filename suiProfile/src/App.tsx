@@ -1,7 +1,7 @@
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { ConnectButton } from "@mysten/dapp-kit";
-import { Box, Flex, Heading } from "@radix-ui/themes";
 import { useCurrentAccount } from "@mysten/dapp-kit";
+import { useEffect } from "react";
 import { Auth } from "./page/Auth";
 import { Dashboard } from "./page/Dashboard";
 import { RegisterUsername } from "./page/RegisterUsername";
@@ -13,9 +13,11 @@ import { MyProfiles } from "./page/MyProfiles";
 import { Sidebar } from "./components/Sidebar";
 import { GeneralStats } from "./page/GeneralStats";
 import { Links } from "./page/Links";
+import { Settings } from "./page/Settings";
 
 function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const account = useCurrentAccount();
   const logoUrl = (import.meta as any).env?.VITE_APP_LOGO_URL as string | undefined;
   
@@ -26,8 +28,16 @@ function Layout({ children }: { children: React.ReactNode }) {
                           !location.pathname.startsWith("/my-profiles") &&
                           !location.pathname.startsWith("/stats") &&
                           !location.pathname.startsWith("/links") &&
+                          !location.pathname.startsWith("/settings") &&
                           !location.pathname.startsWith("/register-username") &&
                           location.pathname !== "/";
+
+  // Cüzdan bağlantısı kesildiğinde Auth sayfasına yönlendir
+  useEffect(() => {
+    if (!account && !isPublicProfile && location.pathname !== "/") {
+      navigate("/");
+    }
+  }, [account, isPublicProfile, location.pathname, navigate]);
 
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark">
@@ -71,6 +81,7 @@ function App() {
           <Route path="/my-profiles" element={<MyProfiles />} />
           <Route path="/stats" element={<GeneralStats />} />
           <Route path="/links" element={<Links />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/register-username" element={<RegisterUsername />} />
           <Route path="/profile/create" element={<CreateProfile />} />
           <Route path="/profile/:profileId/edit" element={<EditProfile />} />

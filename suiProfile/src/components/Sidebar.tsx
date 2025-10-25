@@ -66,20 +66,7 @@ export function Sidebar() {
             Tools
           </h3>
           <nav className="space-y-1">
-            <Link
-              to="/settings"
-              className="flex items-center px-4 py-2.5 rounded-xl text-gray-400 hover:bg-gray-800/50 hover:text-gray-200 transition-all duration-200 group"
-            >
-              <span className="material-symbols-outlined mr-3 text-xl group-hover:text-gray-200">settings</span>
-              <span className="text-[15px]">Settings</span>
-            </Link>
-            <Link
-              to="/help"
-              className="flex items-center px-4 py-2.5 rounded-xl text-gray-400 hover:bg-gray-800/50 hover:text-gray-200 transition-all duration-200 group"
-            >
-              <span className="material-symbols-outlined mr-3 text-xl group-hover:text-gray-200">help_outline</span>
-              <span className="text-[15px]">Help & Support</span>
-            </Link>
+            <NavItem to="/settings" icon="settings" label="Settings" />
           </nav>
         </div>
       </div>
