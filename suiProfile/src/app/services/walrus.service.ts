@@ -55,8 +55,13 @@ export class WalrusService {
 
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      throw new Error("Desteklenmeyen dosya türü. Sadece JPG, PNG, GIF, WebP kabul edilir");
+      throw new Error("Unsupported file type. Only JPEG, PNG, GIF, WebP are accepted");
     }
+
+    return this.uploadFile(file);
+  }
+
+  async uploadFile(file: File): Promise<string> {
 
     let lastError: Error | null = null;
     let attempts = 0;
@@ -141,5 +146,20 @@ export class WalrusService {
     // If we get here, all publishers failed
     console.error("❌ All Walrus publishers failed after", attempts, "attempts");
     throw lastError || new Error("All Walrus publishers failed");
+  }
+
+  async uploadJson(data: any, filename: string = "data.json"): Promise<string> {
+    console.log("📤 Starting JSON upload:", {
+      filename,
+      dataSize: JSON.stringify(data).length,
+      currentPublisher: this.publisherUrls[this.currentPublisherIndex]
+    });
+
+    // Create JSON file
+    const jsonString = JSON.stringify(data, null, 2);
+    const jsonBlob = new Blob([jsonString], { type: 'application/json' });
+    const jsonFile = new File([jsonBlob], filename, { type: 'application/json' });
+
+    return this.uploadFile(jsonFile);
   }
 }

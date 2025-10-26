@@ -9,4 +9,5 @@ export type TestnetVars = {
   clockId: string;
   walrusPublisherUrls: string;
   walrusAggregatorUrls: string;
+  dashboardCollectionId: string;
 };

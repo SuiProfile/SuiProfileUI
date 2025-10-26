@@ -6,6 +6,7 @@ import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Toolti
 import { CHART_COLORS } from "../static/chart-colors";
 import { ProfileData } from "../models/entity/profile-data";
 import { StatisticsData } from "../models/statistics-data";
+import { DashboardSnapshot } from "../components/DashboardSnapshot";
 
 export default function Statistics() {
   const { profileId } = useParams<{ profileId: string }>();
@@ -140,7 +141,7 @@ export default function Statistics() {
   const totalClicks = stats?.totalClicks || 0;
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-8">
+    <div id="statistics-container" className="max-w-7xl mx-auto p-4 md:p-8">
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
         <div>
@@ -165,6 +166,18 @@ export default function Statistics() {
             <span className="material-symbols-outlined text-lg">arrow_back</span>
             Dashboard
           </button>
+          {/* Statistics NFT Snapshot Button */}
+          {stats && (
+            <DashboardSnapshot
+              profileId={profileId || ""}
+              username={profile?.baseUsername || "user"}
+              stats={{
+                totalClicks: stats.totalClicks,
+                totalLinks: stats.linkClicks.size,
+              }}
+              containerId="statistics-container"
+            />
+          )}
         </div>
       </div>
 

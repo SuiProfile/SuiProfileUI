@@ -12,4 +12,5 @@ export const TESTNET_VARS: TestnetVars = {
   clockId: import.meta.env.VITE_CLOCK_ID ?? "",
   walrusPublisherUrls: import.meta.env.VITE_WALRUS_PUBLISHER_URLS ?? "",
   walrusAggregatorUrls: import.meta.env.VITE_WALRUS_AGGREGATOR_URLS ?? "",
+  dashboardCollectionId: import.meta.env.VITE_DASHBOARD_COLLECTION_ID ?? "",
 } as const;

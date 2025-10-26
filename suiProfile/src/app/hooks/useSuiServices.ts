@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { ProfileService } from "../services/profile.service";
 import { StatisticsService } from "../services/statistics.service";
+import { DashboardNFTService } from "../services/dashboardNFT.service";
 import { useSuiClient } from "@mysten/dapp-kit";
 import { WalrusService } from "../services/walrus.service";
 import { useNetworkVariable } from "../config/networkConfig";
@@ -11,6 +12,7 @@ export function useSuiServices() {
   const profileRegistryId = useNetworkVariable("profileRegistryId");
   const statsRegistryId = useNetworkVariable("statsRegistryId");
   const clockId = useNetworkVariable("clockId");
+  const dashboardCollectionId = useNetworkVariable("dashboardCollectionId");
 
   // Get Walrus URLs from environment
   const walrusPublisherUrlsString = useNetworkVariable("walrusPublisherUrls");
@@ -37,6 +39,11 @@ export function useSuiServices() {
   const statisticsService = useMemo(
     () => new StatisticsService(packageId, statsRegistryId, clockId),
     [packageId, statsRegistryId, clockId]
+  );
+
+  const dashboardNFTService = useMemo(
+    () => new DashboardNFTService(packageId, clockId),
+    [packageId, clockId]
   );
 
   const walrusService = useMemo(() => {
@@ -94,6 +101,8 @@ export function useSuiServices() {
     client,
     profileService,
     statisticsService,
+    dashboardNFTService,
     walrusService,
+    dashboardCollectionId,
   };
 }

@@ -6,6 +6,7 @@ import { pageMessages } from "../static/messages/page";
 import { ProfileData } from "../models/entity/profile-data";
 import { StatisticsData } from "../models/statistics-data";
 import { WalrusService } from "../services/walrus.service";
+import { DashboardSnapshot } from "../components/DashboardSnapshot";
 
 export default function Dashboard() {
   const account = useCurrentAccount();
@@ -97,7 +98,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-8">
+    <div id="dashboard-container" className="max-w-7xl mx-auto p-4 md:p-8">
       {/* Header */}
       <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
         <div>
@@ -117,6 +118,16 @@ export default function Dashboard() {
           >
             {pageMessages.dashboard.addUsername}
           </button>
+          {/* Dashboard NFT Snapshot Button */}
+          <DashboardSnapshot
+            profileId={account.address}
+            username={myUsernames[0] || "user"}
+            stats={{
+              totalClicks: Array.from(allStats.values()).reduce((total, stats) => total + stats.totalClicks, 0),
+              totalLinks: profiles.reduce((total, profile) => total + profile.links.size, 0),
+            }}
+            containerId="dashboard-container"
+          />
         </div>
       </div>
 
