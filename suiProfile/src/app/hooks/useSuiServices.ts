@@ -11,10 +11,13 @@ export function useSuiServices() {
   const profileRegistryId = useNetworkVariable("profileRegistryId");
   const statsRegistryId = useNetworkVariable("statsRegistryId");
   const clockId = useNetworkVariable("clockId");
-  
+
   // Get Walrus URLs from environment
   const walrusPublisherUrlsString = useNetworkVariable("walrusPublisherUrls");
   const walrusAggregatorUrlsString = useNetworkVariable("walrusAggregatorUrls");
+
+  const _walrusPublisherUrlsString = walrusPublisherUrlsString ?? "";
+  const _walrusAggregatorUrlsString = walrusAggregatorUrlsString ?? "";
 
   // Debug: Log network variables
   console.log("🔧 Network variables:", {
@@ -40,15 +43,14 @@ export function useSuiServices() {
     // Parse Walrus URLs from environment variables
     let publisherUrls: string[] = [];
     let aggregatorUrls: string[] = [];
-    
-    if (walrusPublisherUrlsString) {
-      publisherUrls = walrusPublisherUrlsString.split(',').map(url => url.trim());
+
+    if (_walrusPublisherUrlsString) {
+      publisherUrls = _walrusPublisherUrlsString.split(",").map((u: any) => u.trim());
     }
-    
-    if (walrusAggregatorUrlsString) {
-      aggregatorUrls = walrusAggregatorUrlsString.split(',').map(url => url.trim());
+    if (_walrusAggregatorUrlsString) {
+      aggregatorUrls = _walrusAggregatorUrlsString.split(",").map((u: any) => u.trim());
     }
-    
+
     // Fallback URLs if environment variables are not set
     if (publisherUrls.length === 0) {
       publisherUrls = [
@@ -62,7 +64,7 @@ export function useSuiServices() {
         "https://walrus-testnet-publisher.dzdaic.com"
       ];
     }
-    
+
     if (aggregatorUrls.length === 0) {
       aggregatorUrls = [
         "https://aggregator.walrus-testnet.walrus.space",
@@ -75,7 +77,7 @@ export function useSuiServices() {
         "https://walrus-testnet-aggregator.dzdaic.com"
       ];
     }
-    
+
     console.log("🔧 Using Walrus URLs:", {
       publisherUrls,
       aggregatorUrls,
@@ -84,9 +86,9 @@ export function useSuiServices() {
         walrusAggregatorUrlsString
       }
     });
-    
+
     return new WalrusService(publisherUrls, aggregatorUrls);
-  }, [walrusPublisherUrlsString, walrusAggregatorUrlsString]);
+  }, [_walrusPublisherUrlsString, _walrusAggregatorUrlsString]);
 
   return {
     client,

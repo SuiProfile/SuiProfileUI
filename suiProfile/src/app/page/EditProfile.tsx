@@ -17,8 +17,8 @@ import {
 } from "@radix-ui/themes";
 import { TrashIcon } from "@radix-ui/react-icons";
 import { useSuiServices } from "../hooks/useSuiServices";
-import { ProfileData } from "../../models/entity/profile-data";
-import { Toast } from "../../models/toast";
+import { ProfileData } from "../models/entity/profile-data";
+import { Toast } from "../models/toast";
 import { THEMES_COLOR } from "../static/themes-color";
 
 export default function EditProfile() {

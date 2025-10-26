@@ -1,5 +1,5 @@
 // src/app/router.tsx
-import { createBrowserRouter, Outlet } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import ScrollToTop from "../components/ScrollToTop";
 import PublicLayout from "../layout/PublicLayout";

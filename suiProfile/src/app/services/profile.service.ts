@@ -1,9 +1,9 @@
 import { Transaction } from "@mysten/sui/transactions";
 import { SuiClient } from "@mysten/sui/client";
 import { bcs } from "@mysten/sui/bcs";
-import { CreateProfileParams } from "../../models/entity/create-profile-params";
-import { UpdateProfileParams } from "../../models/entity/update-profile-params";
-import { ProfileData } from "../../models/entity/profile-data";
+import { CreateProfileParams } from "../models/entity/create-profile-params";
+import { UpdateProfileParams } from "../models/entity/update-profile-params";
+import { ProfileData } from "../models/entity/profile-data";
 
 export class ProfileService {
   constructor(

@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useSuiServices } from "../hooks/useSuiServices";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { ProfileData } from "../../models/entity/profile-data";
 import { CHART_COLORS } from "../static/chart-colors";
+import { ProfileData } from "../models/entity/profile-data";
 
 
 export default function GeneralStats() {

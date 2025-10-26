@@ -5,4 +5,6 @@ import { linkCheckProxy } from './vite.linkcheck-proxy';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), linkCheckProxy()],
+  base: './',
+  build: { assetsDir: '' }
 });

@@ -4,9 +4,9 @@ import { useSuiServices } from "../hooks/useSuiServices";
 import { CreateProfileDialog } from "../components/CreateProfileDialog";
 
 import { checkLink } from "../services/link.service";
-import { LibraryItem } from "../../models/library-item";
-import { DragPayload } from "../../models/drag-payload";
-import { ProfileData } from "../../models/entity/profile-data";
+import { LibraryItem } from "../models/library-item";
+import { ProfileData } from "../models/entity/profile-data";
+import { DragPayload } from "../models/dto/drag-payload";
 
 const MAX_LABEL_LEN = 60;
 const MAX_URL_LEN = 200;

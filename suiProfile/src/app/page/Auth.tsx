@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { ConnectButton, useCurrentAccount } from "@mysten/dapp-kit";
 import { useNavigate } from "react-router-dom";
 import { useZkLogin } from "../hooks/useZkLogin";
-import { EnokiLoginButton } from "../components/EnokiLoginButton";
 import { Box } from "@radix-ui/themes";
 import { pageMessages } from "../static/messages/page";
 
@@ -11,7 +10,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const [checking, setChecking] = useState(false);
 
-  const { loginWithGoogle, isLoading, isAuthenticated } = useZkLogin();
+  const { isAuthenticated } = useZkLogin();
 
   useEffect(() => {
     if (account || isAuthenticated) {

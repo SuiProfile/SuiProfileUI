@@ -1,6 +1,5 @@
 // src/app/layouts/PublicLayout.tsx
 import { Outlet } from "react-router-dom";
-import { ConnectButton } from "@mysten/dapp-kit";
 
 export default function PublicLayout() {
   const logoUrl = (import.meta as any).env?.VITE_APP_LOGO_URL as string | undefined;

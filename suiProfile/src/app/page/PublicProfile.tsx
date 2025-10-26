@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSignAndExecuteTransaction } from "@mysten/dapp-kit";
 import { useSuiServices } from "../hooks/useSuiServices";
-import { ProfileData } from "../../models/entity/profile-data";
+import { ProfileData } from "../models/entity/profile-data";
 
 export default function PublicProfile() {
   const { username, slug } = useParams<{ username: string; slug: string }>();
@@ -125,14 +125,13 @@ export default function PublicProfile() {
               <p className="text-gray-600 dark:text-primary/80">Henüz link eklenmemiş</p>
             </div>
           ) : (
-            Array.from(profile.links).map(([label, url]) => (
+            Array.from(profile.links.entries()).map(([label, url]) => (
               <button
                 key={label}
                 onClick={() => handleLinkClick(label, url)}
-                className="w-full text-left rounded-xl bg-white/70 dark:bg-black/10 border border-gray-200 dark:border-gray-800 px-5 py-4 hover:shadow-md hover:border-primary transition flex items-center justify-between"
+                className="w-full p-4 bg-lime-400 text-black rounded-lg font-semibold hover:bg-lime-300 transition-colors"
               >
-                <span className="text-base font-medium">{label}</span>
-                <span className="text-sm text-gray-500">{url.startsWith("/") ? "→" : "↗"}</span>
+                {label}
               </button>
             ))
           )}

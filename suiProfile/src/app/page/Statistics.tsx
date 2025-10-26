@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useCurrentAccount, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSuiServices } from "../hooks/useSuiServices";
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { ProfileData } from "../../models/entity/profile-data";
-import { StatisticsData } from "../../models/statistics-data";
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { CHART_COLORS } from "../static/chart-colors";
+import { ProfileData } from "../models/entity/profile-data";
+import { StatisticsData } from "../models/statistics-data";
 
 export default function Statistics() {
   const { profileId } = useParams<{ profileId: string }>();
@@ -13,7 +13,7 @@ export default function Statistics() {
   const navigate = useNavigate();
   const { client, profileService, statisticsService } = useSuiServices();
   const { mutate: signAndExecute } = useSignAndExecuteTransaction();
-  
+
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [stats, setStats] = useState<StatisticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ export default function Statistics() {
       setLoading(true);
 
       const profileData = await profileService.getProfile(client, profileId);
-      
+
       if (!profileData) {
         setError("Profil bulunamadı");
         return;
@@ -50,7 +50,7 @@ export default function Statistics() {
       setProfile(profileData);
 
       const statsId = await statisticsService.resolveStats(client, profileId);
-      
+
       if (statsId) {
         const statsData = await statisticsService.getStatistics(client, statsId);
         setStats(statsData);
@@ -87,7 +87,7 @@ export default function Statistics() {
   const linkClicksData = useMemo(() => {
     if (!stats) return [];
     return Array.from(stats.linkClicks)
-      .sort((a, b) => b[1] - a[1])
+      .sort((a: any, b: any) => b[1] - a[1])
       .slice(0, 10)
       .map(([name, value]) => ({ name, clicks: value }));
   }, [stats]);
@@ -96,8 +96,8 @@ export default function Statistics() {
     if (!stats) return [];
     return Array.from(stats.sourceClicks)
       .sort((a, b) => b[1] - a[1])
-      .map(([name, value]) => ({ 
-        name: name || 'Direct', 
+      .map(([name, value]) => ({
+        name: name || 'Direct',
         value,
         percentage: stats.totalClicks > 0 ? ((value / stats.totalClicks) * 100).toFixed(1) : 0
       }));
@@ -249,7 +249,7 @@ export default function Statistics() {
                   <p className="text-xs text-gray-500 dark:text-gray-400">En çok tıklanan linkler</p>
                 </div>
               </div>
-              
+
               {linkClicksData.length === 0 ? (
                 <div className="h-[300px] flex items-center justify-center">
                   <p className="text-gray-400 dark:text-gray-600">Henüz veri yok</p>
@@ -258,17 +258,17 @@ export default function Statistics() {
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={linkClicksData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis 
-                      dataKey="name" 
+                    <XAxis
+                      dataKey="name"
                       tick={{ fill: '#6b7280', fontSize: 12 }}
                       angle={-45}
                       textAnchor="end"
                       height={80}
                     />
                     <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1A1A1A', 
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#1A1A1A',
                         border: '1px solid #374151',
                         borderRadius: '12px',
                         color: '#fff'
@@ -291,7 +291,7 @@ export default function Statistics() {
                   <p className="text-xs text-gray-500 dark:text-gray-400">Trafik kaynakları</p>
                 </div>
               </div>
-              
+
               {sourceClicksData.length === 0 ? (
                 <div className="h-[300px] flex items-center justify-center">
                   <p className="text-gray-400 dark:text-gray-600">Henüz veri yok</p>
@@ -309,13 +309,13 @@ export default function Statistics() {
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {sourceClicksData.map((entry, index) => (
+                      {sourceClicksData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1A1A1A', 
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#1A1A1A',
                         border: '1px solid #374151',
                         borderRadius: '12px',
                         color: '#fff'

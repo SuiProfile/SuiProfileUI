@@ -17,7 +17,6 @@ export function CreateProfileDialog({
   open,
   onOpenChange,
   onCreated,
-  autoNavigateOnSuccess = true,
 }: CreateProfileDialogProps) {
   const account = useCurrentAccount();
   const navigate = useNavigate();

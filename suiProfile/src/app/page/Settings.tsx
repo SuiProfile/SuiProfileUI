@@ -1,13 +1,9 @@
 import { useCurrentAccount } from "@mysten/dapp-kit";
-import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 export default function Settings() {
   const account = useCurrentAccount();
-  const navigate = useNavigate();
-  const [darkMode, setDarkMode] = useState(true);
   const [notifications, setNotifications] = useState(true);
-  const [autoSave, setAutoSave] = useState(true);
 
   if (!account) {
     return null;

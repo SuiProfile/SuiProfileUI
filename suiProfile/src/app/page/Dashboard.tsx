@@ -12,7 +12,6 @@ export default function Dashboard() {
   const [profiles, setProfiles] = useState<ProfileData[]>([]);
   const [myUsernames, setMyUsernames] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hasUsername, setHasUsername] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!account) {
@@ -41,7 +40,7 @@ export default function Dashboard() {
       const validProfiles = profilesData.filter((p: any): p is ProfileData => p !== null);
       setProfiles(validProfiles);
       
-      setHasUsername(validProfiles.length > 0);
+      // setHasUsername kaldırıldı - artık kullanılmıyor
     } catch (error) {
       console.error("Error loading profiles:", error);
     } finally {

@@ -1,7 +1,7 @@
 import { Transaction } from "@mysten/sui/transactions";
 import { SuiClient } from "@mysten/sui/client";
 import { bcs } from "@mysten/sui/bcs";
-import { StatisticsData } from "../../models/statistics-data";
+import { StatisticsData } from "../models/statistics-data";
 
 export class StatisticsService {
   constructor(
