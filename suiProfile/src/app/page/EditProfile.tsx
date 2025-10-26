@@ -234,7 +234,7 @@ export default function EditProfile() {
               onClick={() => navigate("/dashboard")}
               className="h-12 px-6 rounded-2xl bg-lime-400 text-black font-semibold hover:bg-lime-300 transition-all"
             >
-              Dashboard'a Dön
+              Back to Dashboard
             </button>
           </div>
         </div>
@@ -266,7 +266,7 @@ export default function EditProfile() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Profil Düzenle</h1>
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Edit Profile</h1>
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-lime-400 text-sm">link</span>
               <p className="text-sm text-gray-500 dark:text-gray-400 font-mono">/{profile?.slug}</p>
@@ -277,7 +277,7 @@ export default function EditProfile() {
             className="h-11 px-5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-all flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-lg">arrow_back</span>
-            Dashboard
+            Back to Dashboard
           </button>
         </div>
 
@@ -291,7 +291,7 @@ export default function EditProfile() {
                 <div className="w-10 h-10 bg-lime-400/20 rounded-xl flex items-center justify-center">
                   <span className="material-symbols-outlined text-lime-600 dark:text-lime-400">image</span>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Avatar</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Avatar Change</h3>
               </div>
 
               <div className="flex flex-col items-center gap-4 p-6 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-200 dark:border-gray-800">
@@ -323,7 +323,7 @@ export default function EditProfile() {
                   />
                   <div className="px-6 py-2.5 bg-lime-400/10 hover:bg-lime-400/20 text-lime-600 dark:text-lime-400 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 border border-lime-400/20">
                     <span className="material-symbols-outlined text-lg">upload</span>
-                    {uploading ? "Yükleniyor..." : "Avatar Değiştir"}
+                    {uploading ? "Uploading..." : "Change Avatar"}
                   </div>
                 </label>
               </div>
@@ -335,18 +335,18 @@ export default function EditProfile() {
                 <div className="w-10 h-10 bg-purple-400/20 rounded-xl flex items-center justify-center">
                   <span className="material-symbols-outlined text-purple-600 dark:text-purple-400">description</span>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Biyografi</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Biography</h3>
               </div>
 
               <textarea
                 className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white outline-none focus:border-lime-400 focus:ring-4 focus:ring-lime-400/20 transition-all duration-200 resize-none"
-                placeholder="Kendinizi tanıtın..."
+                placeholder="Introduce yourself..."
                 value={formData.bio}
                 onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
                 rows={5}
               />
               <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                {formData.bio.length}/500 karakter
+                {formData.bio.length}/500 characters
               </p>
             </div>
 
@@ -356,7 +356,7 @@ export default function EditProfile() {
                 <div className="w-10 h-10 bg-blue-400/20 rounded-xl flex items-center justify-center">
                   <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">palette</span>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Tema Seçimi</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Theme Selection</h3>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -403,12 +403,12 @@ export default function EditProfile() {
               {saving ? (
                 <>
                   <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-                  Kaydediliyor...
+                  Saving...
                 </>
               ) : (
                 <>
                   <span className="material-symbols-outlined">save</span>
-                  Değişiklikleri Kaydet
+                  Save Changes
                 </>
               )}
             </button>
@@ -423,7 +423,7 @@ export default function EditProfile() {
                   <div className="w-10 h-10 bg-emerald-400/20 rounded-xl flex items-center justify-center">
                     <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400">add_link</span>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Yeni Link Ekle</h3>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Add New Link</h3>
                 </div>
                 <span className="text-xs px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-semibold">
                   {profile?.links.size || 0} / 10
@@ -433,14 +433,14 @@ export default function EditProfile() {
               <div className="space-y-3">
                 <input
                   type="text"
-                  placeholder="Link Adı (örn: Instagram)"
+                  placeholder="Link Name (e.g: Instagram)"
                   value={newLink.label}
                   onChange={(e) => setNewLink(prev => ({ ...prev, label: e.target.value }))}
                   className="w-full h-12 px-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white outline-none focus:border-lime-400 focus:ring-4 focus:ring-lime-400/20 transition-all duration-200"
                 />
                 <input
                   type="url"
-                  placeholder="URL (https://...)"
+                  placeholder="Link URL (https://...)"
                   value={newLink.url}
                   onChange={(e) => setNewLink(prev => ({ ...prev, url: e.target.value }))}
                   className="w-full h-12 px-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white outline-none focus:border-lime-400 focus:ring-4 focus:ring-lime-400/20 transition-all duration-200"
@@ -455,7 +455,7 @@ export default function EditProfile() {
                   }`}
                 >
                   <span className="material-symbols-outlined text-lg">add</span>
-                  Link Ekle
+                  Add Link
                 </button>
               </div>
             </div>
@@ -466,14 +466,14 @@ export default function EditProfile() {
                 <div className="w-10 h-10 bg-orange-400/20 rounded-xl flex items-center justify-center">
                   <span className="material-symbols-outlined text-orange-600 dark:text-orange-400">link</span>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Linklerim</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">My Links</h3>
               </div>
 
               <div className="space-y-3">
                 {profile && profile.links.size === 0 ? (
                   <div className="text-center py-12">
                     <span className="material-symbols-outlined text-gray-300 dark:text-gray-700 text-6xl mb-3 block">link_off</span>
-                    <p className="text-sm text-gray-400 dark:text-gray-600">Henüz link eklenmemiş</p>
+                      <p className="text-sm text-gray-400 dark:text-gray-600">No links added yet</p>
                   </div>
                 ) : (
                   Array.from(profile?.links || []).map(([label, url]) => (

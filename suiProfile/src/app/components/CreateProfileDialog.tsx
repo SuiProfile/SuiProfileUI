@@ -77,11 +77,11 @@ export function CreateProfileDialog({
       console.log("✅ Upload successful, CID:", cid);
       
       handleChange("avatarCid", cid);
-      showToast("Görsel başarıyla yüklendi", "success");
+      showToast("Image uploaded successfully", "success");
     } catch (err) {
       console.error("❌ Upload failed:", err);
       
-      let errorMessage = "Yükleme başarısız";
+      let errorMessage = "Upload failed";
       if (err instanceof Error) {
         errorMessage = err.message;
       }
@@ -115,21 +115,21 @@ export function CreateProfileDialog({
         { transaction: tx },
         {
           onSuccess: async (result) => {
-            showToast("Profil başarıyla oluşturuldu!", "success");
+            showToast("Profile created successfully!", "success");
             setLoading(false);
             onCreated?.(result);
             onOpenChange(false);
           },
           onError: (err) => {
             console.error("❌ Error creating profile:", err);
-            showToast("Profil oluşturulamadı", "error");
+            showToast("Profile creation failed", "error");
             setLoading(false);
           },
         }
       );
     } catch (err) {
       console.error("❌ Error preparing transaction:", err);
-      showToast("İşlem hazırlanamadı", "error");
+      showToast("Transaction preparation failed", "error");
       setLoading(false);
     }
   };
@@ -150,7 +150,7 @@ export function CreateProfileDialog({
           setFormData((prev) => ({ ...prev, username: list[0] }));
         }
       } catch (e) {
-        console.warn("Kullanıcı adları alınamadı", e);
+          console.warn("Usernames not loaded successfully", e);
       }
     };
     load();
@@ -159,7 +159,7 @@ export function CreateProfileDialog({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        {/* Overlay: koyu, soft fade */}
+        {/* Overlay: dark, soft fade */}
         <Dialog.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-[1px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0" />
 
         {/* Content: dark-first */}
@@ -181,17 +181,17 @@ export function CreateProfileDialog({
                 <span className="material-symbols-outlined text-black text-2xl font-bold">add_circle</span>
               </div>
               <Dialog.Title className="text-2xl md:text-3xl font-bold text-neutral-100">
-                Yeni Profil Oluştur
+                Create New Profile
               </Dialog.Title>
               <Dialog.Description className="text-neutral-400 mt-1">
-                Linktree profilinizi oluşturun ve linklerinizi paylaşın
+                Create your Linktree profile and share your links
               </Dialog.Description>
             </div>
 
             <Dialog.Close asChild>
               <button
                 className="h-10 w-10 rounded-xl border border-neutral-800 hover:bg-neutral-800/60 transition flex items-center justify-center text-neutral-300"
-                aria-label="Kapat"
+                aria-label="Close"
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
@@ -248,17 +248,17 @@ export function CreateProfileDialog({
                 <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" disabled={uploading} />
                 <div className="px-6 py-2.5 bg-lime-400/10 hover:bg-lime-400/20 text-lime-400 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 border border-lime-400/20">
                   <span className="material-symbols-outlined text-lg">upload</span>
-                  {uploading ? "Yükleniyor..." : "Avatar Yükle"}
+                  {uploading ? "Uploading..." : "Upload Avatar"}
                 </div>
               </label>
-              <p className="text-xs text-neutral-400 text-center">PNG, JPG veya GIF - Maksimum 5MB</p>
+              <p className="text-xs text-neutral-400 text-center">PNG, JPG or GIF - Maximum 5MB</p>
             </div>
 
             {/* Username */}
             <div>
               <label className="text-sm font-semibold text-neutral-100 mb-3 block flex items-center gap-2">
                 <span className="material-symbols-outlined text-lg text-neutral-300">account_circle</span>
-                Kullanıcı Adı *
+                Username *
               </label>
               {myUsernames.length > 0 ? (
                 <select
@@ -278,7 +278,7 @@ export function CreateProfileDialog({
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500 font-medium">@</span>
                   <input
                     className="w-full h-14 pl-9 pr-4 rounded-2xl border border-neutral-800 bg-[#141414] text-neutral-100 outline-none focus:border-lime-400/70 focus:ring-4 focus:ring-lime-400/10 transition-all duration-200 font-medium"
-                    placeholder="kullanici-adi"
+                    placeholder="username"
                     value={formData.username}
                     onChange={(e) =>
                       handleChange("username", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))
@@ -287,18 +287,18 @@ export function CreateProfileDialog({
                   />
                 </div>
               )}
-              <p className="mt-2 text-xs text-neutral-500">Register ettiğiniz username'i seçin</p>
+              <p className="mt-2 text-xs text-neutral-500">Select the username you registered</p>
             </div>
 
             {/* Slug */}
             <div>
               <label className="text-sm font-semibold text-neutral-100 mb-3 block flex items-center gap-2">
                 <span className="material-symbols-outlined text-lg text-neutral-300">link</span>
-                Profil Slug *
+                Profile Slug *
               </label>
               <input
                 className="w-full h-14 px-4 rounded-2xl border border-neutral-800 bg-[#141414] text-neutral-100 outline-none focus:border-lime-400/70 focus:ring-4 focus:ring-lime-400/10 transition-all duration-200 font-medium"
-                placeholder="main"
+                placeholder="slug"
                 value={formData.slug}
                 onChange={(e) => handleChange("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
                 required
@@ -306,7 +306,7 @@ export function CreateProfileDialog({
               <div className="mt-2 p-3 rounded-xl border border-lime-400/20 bg-lime-400/5">
                 <p className="text-xs text-lime-400 font-medium flex items-center gap-2">
                   <span className="material-symbols-outlined text-sm">link</span>
-                  Profil URL: {formData.username ? `/${formData.username}/${formData.slug || "<slug>"}` : "/<username>/<slug>"}
+                  Profile URL: {formData.username ? `/${formData.username}/${formData.slug || "<slug>"}` : "/<username>/<slug>"}
                 </p>
               </div>
             </div>
@@ -315,24 +315,24 @@ export function CreateProfileDialog({
             <div>
               <label className="text-sm font-semibold text-neutral-100 mb-3 block flex items-center gap-2">
                 <span className="material-symbols-outlined text-lg text-neutral-300">description</span>
-                Biyografi
+                  Bio
               </label>
               <textarea
                 className="w-full px-4 py-3 rounded-2xl border border-neutral-800 bg-[#141414] text-neutral-100 outline-none focus:border-lime-400/70 focus:ring-4 focus:ring-lime-400/10 transition-all duration-200 resize-none"
-                placeholder="Kendinizi tanıtın..."
+                placeholder="Introduce yourself..."
                 value={formData.bio}
                 onChange={(e) => handleChange("bio", e.target.value)}
                 rows={4}
                 maxLength={500}
               />
-              <p className="mt-2 text-xs text-neutral-500">{formData.bio.length}/500 karakter</p>
+              <p className="mt-2 text-xs text-neutral-500">{formData.bio.length}/500 characters</p>
             </div>
 
             {/* Theme */}
             <div>
               <label className="text-sm font-semibold text-neutral-100 mb-3 block flex items-center gap-2">
                 <span className="material-symbols-outlined text-lg text-neutral-300">palette</span>
-                Tema Seçimi
+                Theme Selection
               </label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {THEMES.map((theme) => (
@@ -381,8 +381,8 @@ export function CreateProfileDialog({
                   <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-neutral-100 mb-1">Kategori Profili</p>
-                  <p className="text-xs text-neutral-500">Ana profilinize bağlı bir kategori profili oluşturun</p>
+                    <p className="text-sm font-semibold text-neutral-100 mb-1">Category Profile</p>
+                  <p className="text-xs text-neutral-500">Create a category profile linked to your main profile</p>
                 </div>
               </label>
             </div>
@@ -392,15 +392,15 @@ export function CreateProfileDialog({
               <div className="p-5 rounded-2xl border border-amber-500/30 bg-amber-500/10">
                 <label className="text-sm font-semibold text-amber-300 mb-3 block flex items-center gap-2">
                   <span className="material-symbols-outlined text-lg">account_tree</span>
-                  Ana Profil Slug
+                  Main Profile Slug
                 </label>
                 <input
                   className="w-full h-14 px-4 rounded-2xl border border-amber-500/30 bg-[#141414] text-neutral-100 outline-none focus:border-amber-400/70 focus:ring-4 focus:ring-amber-400/10 transition-all duration-200 font-medium"
-                  placeholder="kullanici-adi-main"
+                  placeholder="username-main"
                   value={formData.parentSlug}
                   onChange={(e) => handleChange("parentSlug", e.target.value)}
                 />
-                <p className="mt-2 text-xs text-amber-300/80">Bu kategorinin bağlı olduğu ana profil slug'ı</p>
+                <p className="mt-2 text-xs text-amber-300/80">The slug of the main profile this category is linked to</p>
               </div>
             )}
 
@@ -418,13 +418,13 @@ export function CreateProfileDialog({
                 {loading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-                    Oluşturuluyor...
+                    Creating...
                   </>
                 ) : (
                   <>
                     <span className="material-symbols-outlined">add_circle</span>
-                    Profil Oluştur
-                  </>
+                    Create Profile
+                  </> 
                 )}
               </button>
 
@@ -434,7 +434,7 @@ export function CreateProfileDialog({
                   disabled={loading}
                   className="h-12 md:h-14 rounded-2xl border border-neutral-800 text-neutral-300 font-medium hover:bg-neutral-800/60 transition-all duration-200 disabled:opacity-50"
                 >
-                  İptal
+                  Cancel
                 </button>
               </Dialog.Close>
             </div>

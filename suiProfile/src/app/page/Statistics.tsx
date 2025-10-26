@@ -114,7 +114,7 @@ export default function Statistics() {
         <div className="min-h-[300px] flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <div className="w-12 h-12 border-4 border-lime-400 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-lg text-gray-500 dark:text-gray-400">İstatistikler yükleniyor...</p>
+            <p className="text-lg text-gray-500 dark:text-gray-400">Statistics loading...</p>
           </div>
         </div>
       </div>
@@ -131,7 +131,7 @@ export default function Statistics() {
             onClick={() => navigate("/dashboard")}
             className="h-12 px-6 rounded-2xl bg-lime-400 text-black font-semibold hover:bg-lime-300 transition-all"
           >
-            Dashboard'a Dön
+            Back to Dashboard
           </button>
         </div>
       </div>
@@ -145,7 +145,7 @@ export default function Statistics() {
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">İstatistikler</h1>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Statistics</h1>
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-lime-400 text-sm">link</span>
             <p className="text-sm text-gray-500 dark:text-gray-400 font-mono">/{profile?.slug}</p>
@@ -157,14 +157,14 @@ export default function Statistics() {
             className="h-11 px-5 rounded-xl border-2 border-lime-400 text-lime-600 dark:text-lime-400 text-sm font-semibold hover:bg-lime-400/10 transition-all flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-lg">edit</span>
-            Profili Düzenle
+            Edit Profile
           </button>
           <button
             onClick={() => navigate('/dashboard')}
             className="h-11 px-5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-all flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-lg">arrow_back</span>
-            Dashboard
+            Back to Dashboard
           </button>
           {/* Statistics NFT Snapshot Button */}
           {stats && (
@@ -186,9 +186,9 @@ export default function Statistics() {
           <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-lime-400/20 to-emerald-500/20 rounded-full flex items-center justify-center">
             <span className="material-symbols-outlined text-lime-600 dark:text-lime-400 text-6xl">analytics</span>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">İstatistik Bulunamadı</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Statistics Not Found</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-            Bu profil için henüz istatistik objesi oluşturulmamış. İstatistikleri takip etmeye başlamak için oluşturun.
+            No statistics object has been created for this profile. Create one to start tracking statistics.
           </p>
           <button
             onClick={handleCreateStats}
@@ -198,12 +198,12 @@ export default function Statistics() {
             {creating ? (
               <>
                 <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-                Oluşturuluyor...
+                Creating...
               </>
             ) : (
               <>
                 <span className="material-symbols-outlined">add_chart</span>
-                İstatistik Oluştur
+                Create Statistics
               </>
             )}
           </button>
@@ -218,7 +218,7 @@ export default function Statistics() {
                 <div className="px-3 py-1 bg-black/10 rounded-full text-xs font-bold">TOTAL</div>
               </div>
               <p className="text-5xl font-bold mb-1">{stats.totalClicks.toLocaleString()}</p>
-              <p className="text-sm opacity-80 font-medium">Toplam Tıklama</p>
+              <p className="text-sm opacity-80 font-medium">Total Clicks</p>
             </div>
 
             <div className="bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-3xl p-6 text-black shadow-xl shadow-emerald-400/20">
@@ -227,7 +227,7 @@ export default function Statistics() {
                 <div className="px-3 py-1 bg-black/10 rounded-full text-xs font-bold">UNIQUE</div>
               </div>
               <p className="text-5xl font-bold mb-1">{stats.uniqueVisitors.toLocaleString()}</p>
-              <p className="text-sm opacity-80 font-medium">Benzersiz Ziyaretçi</p>
+              <p className="text-sm opacity-80 font-medium">Unique Visitors</p>
             </div>
 
             <div className="bg-gradient-to-br from-blue-400 to-blue-500 rounded-3xl p-6 text-white shadow-xl shadow-blue-400/20">
@@ -236,7 +236,7 @@ export default function Statistics() {
                 <div className="px-3 py-1 bg-white/20 rounded-full text-xs font-bold">LINKS</div>
               </div>
               <p className="text-5xl font-bold mb-1">{stats.linkClicks.size}</p>
-              <p className="text-sm opacity-80 font-medium">Aktif Link Sayısı</p>
+                <p className="text-sm opacity-80 font-medium">Active Link Count</p>
             </div>
 
             <div className="bg-gradient-to-br from-purple-400 to-purple-500 rounded-3xl p-6 text-white shadow-xl shadow-purple-400/20">
@@ -245,7 +245,7 @@ export default function Statistics() {
                 <div className="px-3 py-1 bg-white/20 rounded-full text-xs font-bold">SOURCES</div>
               </div>
               <p className="text-5xl font-bold mb-1">{stats.sourceClicks.size}</p>
-              <p className="text-sm opacity-80 font-medium">Farklı Kaynak</p>
+              <p className="text-sm opacity-80 font-medium">Different Sources</p>
             </div>
           </div>
 
@@ -258,14 +258,14 @@ export default function Statistics() {
                   <span className="material-symbols-outlined text-lime-600 dark:text-lime-400">bar_chart</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Link Performansı</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">En çok tıklanan linkler</p>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Link Performance</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Most clicked links</p>
                 </div>
               </div>
 
               {linkClicksData.length === 0 ? (
                 <div className="h-[300px] flex items-center justify-center">
-                  <p className="text-gray-400 dark:text-gray-600">Henüz veri yok</p>
+                  <p className="text-gray-400 dark:text-gray-600">No data yet</p>
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height={300}>
@@ -300,14 +300,14 @@ export default function Statistics() {
                   <span className="material-symbols-outlined text-purple-600 dark:text-purple-400">pie_chart</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Kaynak Dağılımı</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Trafik kaynakları</p>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Source Distribution</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Traffic sources</p>
                 </div>
               </div>
 
               {sourceClicksData.length === 0 ? (
                 <div className="h-[300px] flex items-center justify-center">
-                  <p className="text-gray-400 dark:text-gray-600">Henüz veri yok</p>
+                  <p className="text-gray-400 dark:text-gray-600">No data yet</p>
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height={300}>
@@ -346,15 +346,15 @@ export default function Statistics() {
             <div className="bg-white dark:bg-[#1A1A1A] rounded-3xl border border-gray-200 dark:border-gray-800 p-6">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <span className="material-symbols-outlined text-lime-400">format_list_numbered</span>
-                Detaylı Link İstatistikleri
+                Detailed Link Statistics
               </h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="border-b border-gray-200 dark:border-gray-800">
                     <tr className="text-left">
                       <th className="py-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Link</th>
-                      <th className="py-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Tıklama</th>
-                      <th className="py-3 font-semibold text-gray-600 dark:text-gray-400">Oran</th>
+                        <th className="py-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Clicks</th>
+                      <th className="py-3 font-semibold text-gray-600 dark:text-gray-400">Percentage</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -386,15 +386,15 @@ export default function Statistics() {
             <div className="bg-white dark:bg-[#1A1A1A] rounded-3xl border border-gray-200 dark:border-gray-800 p-6">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <span className="material-symbols-outlined text-purple-400">source</span>
-                Kaynak Bazlı Detaylar
+                  Source Based Details
               </h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="border-b border-gray-200 dark:border-gray-800">
                     <tr className="text-left">
-                      <th className="py-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Kaynak</th>
-                      <th className="py-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Tıklama</th>
-                      <th className="py-3 font-semibold text-gray-600 dark:text-gray-400">Oran</th>
+                      <th className="py-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Source</th>
+                      <th className="py-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Clicks</th>
+                      <th className="py-3 font-semibold text-gray-600 dark:text-gray-400">Percentage</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -428,7 +428,7 @@ export default function Statistics() {
             <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 flex items-center gap-3">
               <span className="material-symbols-outlined text-gray-400">schedule</span>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                <strong className="text-gray-900 dark:text-white">Son tıklama:</strong> {new Date(stats.lastClickMs).toLocaleString('tr-TR')}
+                <strong className="text-gray-900 dark:text-white">Last click:</strong> {new Date(stats.lastClickMs).toLocaleString('tr-TR')}
               </p>
             </div>
           )}

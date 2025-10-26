@@ -535,7 +535,7 @@ export default function Links() {
                 disabled={addingToLibrary}
               >
                 {addingToLibrary && <span className="w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin" />}
-                <span>Ekle</span>
+                <span>Add</span>
               </button>
             </div>
 
@@ -549,7 +549,7 @@ export default function Links() {
                   title={item.url}
                 >
                   <div className="min-w-0 flex items-center gap-2">
-                    {/* 👇 Favicon başta */}
+                    {/* 👇 Favicon at the beginning */}
                     {item.favicon ? (
                       <img src={item.favicon} alt="" className="w-4 h-4 rounded" loading="lazy" />
                     ) : (
@@ -562,7 +562,7 @@ export default function Links() {
                   </div>
                 </li>
               ))}
-              {library.length === 0 && <li className="text-xs text-gray-500">Henüz link yok.</li>}
+              {library.length === 0 && <li className="text-xs text-gray-500">No links yet.</li>}
             </ul>
           </div>
 
@@ -596,7 +596,7 @@ export default function Links() {
                         }}
                         className="px-2 py-1 rounded-md border text-xs hover:bg-gray-50 dark:hover:bg-gray-800 border-gray-300 dark:border-gray-700"
                       >
-                        Seç
+                        Select
                       </button>
                     </div>
                   </div>
@@ -616,7 +616,7 @@ export default function Links() {
                         >
                           <div className="flex items-center gap-2 min-w-0">
                             <i className="pi pi-grip-vertical text-gray-400" />
-                            {/* 👇 Favicon başta */}
+                            {/* 👇 Favicon at the beginning */}
                             {fav ? (
                               <img src={fav} alt="" className="w-4 h-4 rounded shrink-0" loading="lazy" />
                             ) : (
@@ -644,7 +644,7 @@ export default function Links() {
                             disabled={saving}
                             className="opacity-0 group-hover:opacity-100 transition-opacity text-xs px-2 py-1 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                           >
-                            Sil
+                            Delete
                           </button>
                         </li>
                       );
@@ -655,7 +655,7 @@ export default function Links() {
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => onDropBeforeIndex(e, p.id, labels.length)}
                     >
-                      Bırak
+                      Drop
                     </li>
                   </ul>
                 </div>
@@ -723,14 +723,14 @@ export default function Links() {
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.currentTarget.value)}
-                  placeholder="Profilleri filtrele (slug, label, url)..."
+                  placeholder="Filter profiles (slug, label, url)..."
                   className="w-full h-11 rounded-xl pl-9 pr-10 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus:border-lime-400 focus:ring-4 focus:ring-lime-400/20"
                 />
                 {search && (
                   <button
                     onClick={() => setSearch("")}
                     className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 grid place-items-center"
-                    aria-label="Temizle"
+                    aria-label="Clear"
                   >
                     <i className="pi pi-times text-gray-500 text-xs" />
                   </button>
@@ -743,7 +743,7 @@ export default function Links() {
                 onClick={() => setCreateProfileOpen(true)}
                 className="h-11 px-5 rounded-xl bg-lime-400 text-black font-bold shadow-lg shadow-lime-400/30 hover:bg-lime-300 transition w-full md:w-auto"
               >
-                Yeni Profil
+                New Profile 
               </button>
             </div>
           </div>
@@ -773,7 +773,7 @@ export default function Links() {
             const details = await Promise.all(ids.map((id) => profileService.getProfile(client, id)));
             const list = details.filter((p): p is ProfileData => p !== null);
 
-            // Aynı username/slug kombinasyonu kontrolü
+            // Same username/slug combination check
             const usernameSlugMap = new Map<string, Set<string>>();
             let hasDuplicate = false;
 
@@ -795,7 +795,7 @@ export default function Links() {
             if (!hasDuplicate) {
               setProfiles(list);
               if (list.length > 0 && !selectedProfileId) setSelectedProfileId(list[0].id);
-              showToast("Profile created", "success");
+              showToast("Profile created successfully!", "success");
             }
           } finally {
             setLoading(false);
