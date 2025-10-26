@@ -247,31 +247,17 @@ export default function CreateProfile() {
                   <span className="material-symbols-outlined text-lg">account_circle</span>
                   {pageMessages.createProfile.username} *
                 </label>
-                {myUsernames.length > 0 ? (
-                  <select
-                    className="w-full h-14 px-4 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white outline-none focus:border-lime-400 focus:ring-4 focus:ring-lime-400/20 transition-all duration-200 font-medium"
-                    value={formData.username}
-                    onChange={(e) => handleChange("username", e.target.value)}
-                    required
-                  >
-                    {myUsernames.map((u) => (
-                      <option key={u} value={u}>@{u}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 font-medium">
-                      @
-                    </span>
-                    <input
-                      className="w-full h-14 pl-9 pr-4 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white outline-none focus:border-lime-400 focus:ring-4 focus:ring-lime-400/20 transition-all duration-200 font-medium"
-                      placeholder="username"
-                      value={formData.username}
-                      onChange={(e) => handleChange("username", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-                      required
-                    />
-                  </div>
-                )}
+                <select
+                  className="w-full h-14 px-4 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white outline-none focus:border-lime-400 focus:ring-4 focus:ring-lime-400/20 transition-all duration-200 font-medium"
+                  value={formData.username}
+                  onChange={(e) => handleChange("username", e.target.value)}
+                  required
+                >
+                  <option value="">Select a username...</option>
+                  {myUsernames.map((u) => (
+                    <option key={u} value={u}>@{u}</option>
+                  ))}
+                </select>
                 <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                   {pageMessages.createProfile.usernameRequired}
                 </p>

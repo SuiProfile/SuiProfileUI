@@ -51,7 +51,7 @@ export class StatisticsService {
   }
 
   /**
-   * İstatistikleri sıfırlar
+   * Reset statistics
    */
   resetStatistics(statsId: string): Transaction {
     const tx = new Transaction();
