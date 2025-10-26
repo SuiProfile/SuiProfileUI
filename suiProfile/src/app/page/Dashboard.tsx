@@ -4,19 +4,32 @@ import { useNavigate } from "react-router-dom";
 import { useSuiServices } from "../hooks/useSuiServices";
 import { pageMessages } from "../static/messages/page";
 import { ProfileData } from "../models/entity/profile-data";
+import { StatisticsData } from "../models/statistics-data";
+import { WalrusService } from "../services/walrus.service";
 
 export default function Dashboard() {
   const account = useCurrentAccount();
   const navigate = useNavigate();
-  const { client, profileService } = useSuiServices();
+  const { client, profileService, statisticsService } = useSuiServices();
   const [profiles, setProfiles] = useState<ProfileData[]>([]);
   const [myUsernames, setMyUsernames] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [allStats, setAllStats] = useState<Map<string, StatisticsData>>(new Map());
+  const [walrusService, setWalrusService] = useState<WalrusService | null>(null);
 
   useEffect(() => {
     if (!account) {
       navigate("/");
       return;
+    }
+
+    // Initialize WalrusService
+    const publisherUrls = import.meta.env.VITE_WALRUS_PUBLISHER_URLS?.split(',') || [];
+    const aggregatorUrls = import.meta.env.VITE_WALRUS_AGGREGATOR_URLS?.split(',') || [];
+    
+    if (publisherUrls.length > 0 && aggregatorUrls.length > 0) {
+      const walrus = new WalrusService(publisherUrls, aggregatorUrls);
+      setWalrusService(walrus);
     }
 
     loadProfiles();
@@ -40,12 +53,33 @@ export default function Dashboard() {
       const validProfiles = profilesData.filter((p: any): p is ProfileData => p !== null);
       setProfiles(validProfiles);
       
-      // setHasUsername kaldırıldı - artık kullanılmıyor
+      // Load statistics for all profiles
+      const statsMap = new Map<string, StatisticsData>();
+      for (const profile of validProfiles) {
+        try {
+          const statsId = await statisticsService.resolveStats(client, profile.id);
+          if (statsId) {
+            const statsData = await statisticsService.getStatistics(client, statsId);
+            if (statsData) {
+              statsMap.set(profile.id, statsData);
+            }
+          }
+        } catch (error) {
+          console.log(`No stats found for profile ${profile.id}`);
+        }
+      }
+      setAllStats(statsMap);
+      
     } catch (error) {
       console.error("Error loading profiles:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getAvatarUrl = (avatarCid: string | undefined): string | undefined => {
+    if (!avatarCid || !walrusService) return undefined;
+    return walrusService.buildUrl(avatarCid);
   };
 
   if (!account) {
@@ -87,7 +121,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 mb-8">
         <div className="flex flex-col gap-2 rounded-xl p-5 bg-accent text-white shadow-lg border border-gray-200 dark:border-gray-700">
           <p className="opacity-80 text-sm">{pageMessages.dashboard.totalProfiles}</p>
           <p className="text-3xl md:text-4xl font-bold">{profiles.length}</p>
@@ -100,9 +134,15 @@ export default function Dashboard() {
           <p className="opacity-80 text-sm">{pageMessages.dashboard.categoryProfiles}</p>
           <p className="text-3xl md:text-4xl font-bold">{profiles.filter(p => p.isCategory).length}</p>
         </div>
+        <div className="flex flex-col gap-2 rounded-xl p-5 bg-gradient-to-br from-lime-400 to-lime-500 text-black shadow-lg border border-gray-200 dark:border-gray-700">
+          <p className="opacity-80 text-sm font-medium">Total Clicks</p>
+          <p className="text-3xl md:text-4xl font-bold">
+            {Array.from(allStats.values()).reduce((total, stats) => total + stats.totalClicks, 0).toLocaleString()}
+          </p>
+        </div>
       </div>
 
-      {/* Kullanıcı Adlarım */}
+      {/* Usernames */}
       <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-black/10 p-4 mb-8">
         <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{pageMessages.dashboard.myUsernames}</p>
         {myUsernames.length === 0 ? (
@@ -115,6 +155,99 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* General Statistics Table */}
+      {allStats.size > 0 && (
+        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A] p-6 mb-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-lime-400/20 rounded-xl flex items-center justify-center">
+              <span className="material-symbols-outlined text-lime-600 dark:text-lime-400">analytics</span>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Profile Performance</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">All your profiles' general statistics</p>
+            </div>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b border-gray-200 dark:border-gray-800">
+                <tr className="text-left">
+                  <th className="py-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Profile</th>
+                  <th className="py-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Total Clicks</th>
+                  <th className="py-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Unique Visitors</th>
+                  <th className="py-3 pr-4 font-semibold text-gray-600 dark:text-gray-400">Active Link</th>
+                  <th className="py-3 font-semibold text-gray-600 dark:text-gray-400">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {profiles
+                  .filter(profile => allStats.has(profile.id))
+                  .map((profile) => {
+                    const stats = allStats.get(profile.id)!;
+                    return (
+                      <tr key={profile.id} className="border-b border-gray-100 dark:border-gray-800">
+                        <td className="py-3 pr-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full ring-2 ring-lime-400 overflow-hidden flex items-center justify-center bg-lime-400 text-black text-sm font-bold">
+                              {getAvatarUrl(profile.avatarCid) ? (
+                                <img 
+                                  src={getAvatarUrl(profile.avatarCid)} 
+                                  alt={`${profile.baseUsername} avatar`}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    const parent = target.parentElement;
+                                    if (parent) {
+                                      parent.textContent = profile.baseUsername?.charAt(0)?.toUpperCase() || '?';
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                profile.baseUsername?.charAt(0)?.toUpperCase() || '?'
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900 dark:text-white">/{profile.slug}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">@{profile.baseUsername}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 pr-4 text-gray-600 dark:text-gray-400 font-semibold">
+                          {stats.totalClicks.toLocaleString()}
+                        </td>
+                        <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">
+                          {stats.uniqueVisitors.toLocaleString()}
+                        </td>
+                        <td className="py-3 pr-4 text-gray-600 dark:text-gray-400">
+                          {stats.linkClicks.size}
+                        </td>
+                        <td className="py-3">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => navigate(`/profile/${profile.id}/stats`)}
+                              className="h-8 px-3 rounded-lg bg-lime-400 text-black text-xs font-semibold hover:bg-lime-300 transition-all flex items-center gap-1"
+                            >
+                              <span className="material-symbols-outlined text-sm">analytics</span>
+                              Details
+                            </button>
+                            <button
+                              onClick={() => navigate(`/${profile.slug}`)}
+                              className="h-8 px-3 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
+                            >
+                              View
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Profiles grouped by username */}
       <div className="flex flex-col gap-6">
@@ -154,7 +287,23 @@ export default function Dashboard() {
                         <div className="p-4">
                           <div className="-mt-10 mb-2">
                             <div className="w-16 h-16 rounded-full ring-4 ring-white dark:ring-black/30 overflow-hidden flex items-center justify-center bg-accent text-white text-xl">
-                              {profile.avatarCid ? '🖼️' : (profile.baseUsername?.charAt(0)?.toUpperCase() || '?')}
+                              {getAvatarUrl(profile.avatarCid) ? (
+                                <img 
+                                  src={getAvatarUrl(profile.avatarCid)} 
+                                  alt={`${profile.baseUsername} avatar`}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    const parent = target.parentElement;
+                                    if (parent) {
+                                      parent.textContent = profile.baseUsername?.charAt(0)?.toUpperCase() || '?';
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                profile.baseUsername?.charAt(0)?.toUpperCase() || '?'
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -167,6 +316,18 @@ export default function Dashboard() {
                             <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">{profile.bio}</p>
                           )}
                           <p className="text-xs text-gray-500 mt-1">{profile.links.size} {pageMessages.dashboard.links} • {pageMessages.dashboard.theme}: {profile.theme}</p>
+                          {allStats.has(profile.id) && (
+                            <div className="mt-2 flex items-center gap-3 text-xs">
+                              <span className="flex items-center gap-1 text-lime-600 dark:text-lime-400">
+                                <span className="material-symbols-outlined text-sm">mouse</span>
+                                {allStats.get(profile.id)!.totalClicks.toLocaleString()} tıklama
+                              </span>
+                              <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
+                                <span className="material-symbols-outlined text-sm">group</span>
+                                {allStats.get(profile.id)!.uniqueVisitors.toLocaleString()} ziyaretçi
+                              </span>
+                            </div>
+                          )}
                           <div className="flex items-center gap-2 mt-4">
                             <button
                               onClick={() => navigate(`/${profile.slug}`)}

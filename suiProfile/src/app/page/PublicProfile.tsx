@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useSignAndExecuteTransaction } from "@mysten/dapp-kit";
 import { useSuiServices } from "../hooks/useSuiServices";
 import { ProfileData } from "../models/entity/profile-data";
+import { WalrusService } from "../services/walrus.service";
 
 export default function PublicProfile() {
   const { username, slug } = useParams<{ username: string; slug: string }>();
@@ -13,12 +14,23 @@ export default function PublicProfile() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [walrusService, setWalrusService] = useState<WalrusService | null>(null);
 
   useEffect(() => {
     if (!username || !slug) {
       navigate("/");
       return;
     }
+    
+    // Initialize WalrusService
+    const publisherUrls = import.meta.env.VITE_WALRUS_PUBLISHER_URLS?.split(',') || [];
+    const aggregatorUrls = import.meta.env.VITE_WALRUS_AGGREGATOR_URLS?.split(',') || [];
+    
+    if (publisherUrls.length > 0 && aggregatorUrls.length > 0) {
+      const walrus = new WalrusService(publisherUrls, aggregatorUrls);
+      setWalrusService(walrus);
+    }
+    
     loadProfile();
   }, [username, slug]);
 
@@ -94,9 +106,12 @@ export default function PublicProfile() {
     );
   }
 
-  const avatarUrl = profile.avatarCid
-    ? `https://aggregator.walrus-testnet.walrus.space/v1/${profile.avatarCid}`
-    : undefined;
+  const getAvatarUrl = (avatarCid: string | undefined): string | undefined => {
+    if (!avatarCid || !walrusService) return undefined;
+    return walrusService.buildUrl(avatarCid);
+  };
+
+  const avatarUrl = getAvatarUrl(profile.avatarCid);
 
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark">
@@ -105,8 +120,20 @@ export default function PublicProfile() {
         <div className="flex flex-col items-center text-center">
           <div className="w-28 h-28 rounded-full ring-4 ring-white dark:ring-black/30 overflow-hidden bg-accent text-white flex items-center justify-center text-3xl">
             {avatarUrl ? (
-              // eslint-disable-next-line jsx-a11y/alt-text
-              <img src={avatarUrl} className="w-full h-full object-cover" />
+              <img 
+                src={avatarUrl} 
+                alt={`${username} avatar`}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback to initial if image fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.textContent = username?.charAt(0).toUpperCase() || "?";
+                  }
+                }}
+              />
             ) : (
               (username?.charAt(0).toUpperCase() || "?")
             )}

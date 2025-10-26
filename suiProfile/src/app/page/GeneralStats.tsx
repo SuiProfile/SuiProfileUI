@@ -42,13 +42,11 @@ export default function GeneralStats() {
                 t += s.totalClicks;
                 u += s.uniqueVisitors;
                 
-                // Profil bazlı istatistikler
                 profileData.push({
                   name: p.slug,
                   clicks: s.totalClicks
                 });
                 
-                // Kategori bazlı istatistikler
                 if (p.isCategory) {
                   categoryData.push({
                     name: p.slug,
@@ -83,7 +81,7 @@ export default function GeneralStats() {
         <div className="min-h-[300px] flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <div className="w-12 h-12 border-4 border-lime-400 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-lg text-gray-500 dark:text-gray-400">Genel istatistikler yükleniyor...</p>
+            <p className="text-lg text-gray-500 dark:text-gray-400">General statistics are loading...</p>
           </div>
         </div>
       </div>
@@ -95,10 +93,10 @@ export default function GeneralStats() {
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Genel İstatistikler</h1>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">General Statistics</h1>
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-lime-400 text-sm">analytics</span>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Tüm profillerinizin genel performansı</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">General performance of all your profiles</p>
           </div>
         </div>
       </div>
@@ -111,7 +109,7 @@ export default function GeneralStats() {
             <div className="px-3 py-1 bg-black/10 rounded-full text-xs font-bold">TOTAL</div>
           </div>
           <p className="text-5xl font-bold mb-1">{profiles.length}</p>
-          <p className="text-sm opacity-80 font-medium">Toplam Profil</p>
+          <p className="text-sm opacity-80 font-medium">Total Profiles</p>
         </div>
 
         <div className="bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-3xl p-6 text-black shadow-xl shadow-emerald-400/20">
@@ -120,7 +118,7 @@ export default function GeneralStats() {
             <div className="px-3 py-1 bg-black/10 rounded-full text-xs font-bold">MAIN</div>
           </div>
           <p className="text-5xl font-bold mb-1">{mainCount}</p>
-          <p className="text-sm opacity-80 font-medium">Ana Profiller</p>
+          <p className="text-sm opacity-80 font-medium">Main Profiles</p>
         </div>
 
         <div className="bg-gradient-to-br from-blue-400 to-blue-500 rounded-3xl p-6 text-white shadow-xl shadow-blue-400/20">
@@ -129,7 +127,7 @@ export default function GeneralStats() {
             <div className="px-3 py-1 bg-white/20 rounded-full text-xs font-bold">CATEGORY</div>
           </div>
           <p className="text-5xl font-bold mb-1">{catCount}</p>
-          <p className="text-sm opacity-80 font-medium">Kategori Profiller</p>
+          <p className="text-sm opacity-80 font-medium">Category Profiles</p>
         </div>
 
         <div className="bg-gradient-to-br from-purple-400 to-purple-500 rounded-3xl p-6 text-white shadow-xl shadow-purple-400/20">
@@ -138,7 +136,7 @@ export default function GeneralStats() {
             <div className="px-3 py-1 bg-white/20 rounded-full text-xs font-bold">CLICKS</div>
           </div>
           <p className="text-5xl font-bold mb-1">{totalClicks.toLocaleString()}</p>
-          <p className="text-sm opacity-80 font-medium">Toplam Tıklama</p>
+          <p className="text-sm opacity-80 font-medium">Total Clicks</p>
         </div>
       </div>
 
@@ -149,7 +147,7 @@ export default function GeneralStats() {
             <span className="material-symbols-outlined text-lime-600 dark:text-lime-400 text-2xl">group</span>
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Benzersiz Ziyaretçi</h3>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Unique Visitors</h3>
             <p className="text-3xl font-bold text-gray-900 dark:text-white">{uniqueVisitors.toLocaleString()}</p>
           </div>
         </div>
@@ -165,13 +163,13 @@ export default function GeneralStats() {
             </div>
             <div>
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Profil Performansı</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">En çok tıklanan profiller</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Most clicked profiles</p>
             </div>
           </div>
           
           {profileStats.length === 0 ? (
             <div className="h-[300px] flex items-center justify-center">
-              <p className="text-gray-400 dark:text-gray-600">Henüz veri yok</p>
+              <p className="text-gray-400 dark:text-gray-600">No data yet</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={300}>
@@ -206,14 +204,14 @@ export default function GeneralStats() {
               <span className="material-symbols-outlined text-purple-600 dark:text-purple-400">pie_chart</span>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Kategori Dağılımı</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Kategori profillerin performansı</p>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Category Distribution</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Performance of category profiles</p>
             </div>
           </div>
           
           {categoryStats.length === 0 ? (
             <div className="h-[300px] flex items-center justify-center">
-              <p className="text-gray-400 dark:text-gray-600">Henüz kategori profili yok</p>
+              <p className="text-gray-400 dark:text-gray-600">No category profile yet</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={300}>

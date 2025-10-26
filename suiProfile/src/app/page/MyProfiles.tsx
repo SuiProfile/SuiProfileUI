@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useSuiServices } from "../hooks/useSuiServices";
 import { pageMessages } from "../static/messages";
 import { ProfileData } from "../models/entity/profile-data";
+import { WalrusService } from "../services/walrus.service";
 
 export default function MyProfiles() {
   const account = useCurrentAccount();
@@ -13,9 +14,20 @@ export default function MyProfiles() {
   const [loading, setLoading] = useState(true);
   const [usernames, setUsernames] = useState<string[]>([]);
   const [profiles, setProfiles] = useState<ProfileData[]>([]);
+  const [walrusService, setWalrusService] = useState<WalrusService | null>(null);
 
   useEffect(() => {
     if (!account) return;
+    
+    // Initialize WalrusService
+    const publisherUrls = import.meta.env.VITE_WALRUS_PUBLISHER_URLS?.split(',') || [];
+    const aggregatorUrls = import.meta.env.VITE_WALRUS_AGGREGATOR_URLS?.split(',') || [];
+    
+    if (publisherUrls.length > 0 && aggregatorUrls.length > 0) {
+      const walrus = new WalrusService(publisherUrls, aggregatorUrls);
+      setWalrusService(walrus);
+    }
+    
     const run = async () => {
       try {
         setLoading(true);
@@ -52,8 +64,10 @@ export default function MyProfiles() {
     return by;
   }, [usernames, profiles]);
 
-  const avatarUrl = (cid?: string) =>
-    cid ? `https://aggregator.walrus-testnet.walrus.space/v1/${cid}` : undefined;
+  const getAvatarUrl = (avatarCid: string | undefined): string | undefined => {
+    if (!avatarCid || !walrusService) return undefined;
+    return walrusService.buildUrl(avatarCid);
+  };
 
   if (!account) {
     return (
@@ -150,9 +164,20 @@ export default function MyProfiles() {
                       <div className="p-4">
                         <div className="-mt-10 mb-2">
                           <div className="w-16 h-16 rounded-full ring-4 ring-white dark:ring-black/30 overflow-hidden">
-                            {p.avatarCid ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={avatarUrl(p.avatarCid)} alt="avatar" className="w-full h-full object-cover" />
+                            {getAvatarUrl(p.avatarCid) ? (
+                              <img 
+                                src={getAvatarUrl(p.avatarCid)} 
+                                alt={`${p.baseUsername} avatar`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  const parent = target.parentElement;
+                                  if (parent) {
+                                    parent.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-accent text-white text-xl">${p.baseUsername?.charAt(0)?.toUpperCase() || "?"}</div>`;
+                                  }
+                                }}
+                              />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-accent text-white text-xl">
                                 {p.baseUsername?.charAt(0)?.toUpperCase() || "?"}

@@ -109,7 +109,7 @@ export default function Links() {
         if (list.length > 0 && !selectedProfileId) setSelectedProfileId(list[0].id);
       } catch (e) {
         console.error(e);
-        showToast("Profiller yüklenemedi");
+        showToast("Profiles could not be loaded");
       } finally {
         setLoading(false);
       }
@@ -142,13 +142,13 @@ export default function Links() {
     const label = newLabel.trim();
     const url = newUrl.trim();
 
-    if (!label || label.length < 2) return showToast("Başlık en az 2 karakter");
-    if (!(url.startsWith("/") || urlRegex.test(url))) return showToast("URL https:// ile başlamalı veya /slug olmalı");
+    if (!label || label.length < 2) return showToast("Title must be at least 2 characters");
+    if (!(url.startsWith("/") || urlRegex.test(url))) return showToast("URL must start with https:// or /slug");
 
     // duplicate in library (case-insensitive label + exact url)
     const nameKey = label.toLocaleLowerCase("tr");
     if (library.some((l) => l.url === url && l.label.toLocaleLowerCase("tr") === nameKey)) {
-      return showToast("Kütüphanede zaten var");
+      return showToast("Library already exists");
     }
 
     setAddingToLibrary(true);
@@ -162,7 +162,7 @@ export default function Links() {
         // Harici URL → serviste test et
         const res = await checkLink(url, { timeoutMs: 6000 });
         if (!res.reachable) {
-          showToast("Linke ulaşılamadı (timeout veya CORS)", "error");
+          showToast("Link could not be reached (timeout or CORS)", "error");
           setAddingToLibrary(false);
           return;
         }
@@ -185,10 +185,10 @@ export default function Links() {
 
       setNewLabel("");
       setNewUrl("");
-      showToast("Kütüphaneye eklendi", "success");
+      showToast("Added to library", "success");
     } catch (err) {
       console.error(err);
-      showToast("Ekleme sırasında bir hata oluştu");
+      showToast("An error occurred while adding");
     } finally {
       setAddingToLibrary(false);
     }
@@ -270,7 +270,7 @@ export default function Links() {
 
         // duplicate label (on-chain key)
         if (target.links.has(libItem.label)) {
-          showToast("Bu label profilde zaten var");
+          showToast("This label already exists on the profile");
           return;
         }
 
@@ -284,7 +284,7 @@ export default function Links() {
         if (!current.includes(libItem.label)) current.push(libItem.label);
         nextOrder[toProfileId] = current;
         persistOrders(nextOrder);
-        showToast("Profile eklendi", "success");
+        showToast("Profile added", "success");
       } else {
         const fromProfileId = payload.fromProfileId!;
         const fromProfile = profiles.find((p) => p.id === fromProfileId);
@@ -304,10 +304,10 @@ export default function Links() {
           filtered.push(label);
           nextOrder[fromProfileId] = filtered;
           persistOrders(nextOrder);
-          showToast("Sıra güncellendi", "success");
+          showToast("Order updated", "success");
         } else {
           if (toProfile.links.has(label)) {
-            showToast("Hedef profilde aynı label var");
+            showToast("Same label already exists on the target profile");
             return;
           }
           setSaving(true);
@@ -325,11 +325,11 @@ export default function Links() {
           nextOrder[fromProfileId] = src;
 
           persistOrders(nextOrder);
-          showToast("Profil değiştirildi", "success");
+          showToast("Profile changed", "success");
         }
       }
     } catch {
-      showToast("İşlem başarısız");
+      showToast("Operation failed");
     } finally {
       setSaving(false);
       setTimeout(() => droppingRef.current.delete(key), 0);
@@ -353,7 +353,7 @@ export default function Links() {
         const target = profiles.find((p) => p.id === toProfileId);
         if (!target) return;
         if (target.links.has(libItem.label)) {
-          showToast("Bu label profilde zaten var");
+          showToast("This label already exists on the profile");
           return;
         }
         setSaving(true);
@@ -367,7 +367,7 @@ export default function Links() {
         filtered.splice(idx, 0, libItem.label);
         nextOrder[toProfileId] = filtered;
         persistOrders(nextOrder);
-        showToast("Profile eklendi", "success");
+        showToast("Profile added", "success");
       } else {
         const fromProfileId = payload.fromProfileId!;
         const label = payload.linkId;
@@ -381,7 +381,7 @@ export default function Links() {
           filtered.splice(idx, 0, label);
           nextOrder[toProfileId] = filtered;
           persistOrders(nextOrder);
-          showToast("Sıra güncellendi", "success");
+          showToast("Order updated", "success");
         } else {
           const fromProfile = profiles.find((p) => p.id === fromProfileId);
           const toProfile = profiles.find((p) => p.id === toProfileId);
@@ -389,7 +389,7 @@ export default function Links() {
           const url = fromProfile.links.get(label) || "";
           if (!url) return;
           if (toProfile.links.has(label)) {
-            showToast("Hedef profilde aynı label var");
+            showToast("Same label already exists on the target profile");
             return;
           }
           setSaving(true);
@@ -408,11 +408,11 @@ export default function Links() {
           nextOrder[fromProfileId] = (nextOrder[fromProfileId] ?? srcBase).filter((x) => x !== label);
 
           persistOrders(nextOrder);
-          showToast("Profil değiştirildi", "success");
+          showToast("Profile changed", "success");
         }
       }
     } catch {
-      showToast("İşlem başarısız");
+      showToast("Operation failed");
     } finally {
       setSaving(false);
       setTimeout(() => droppingRef.current.delete(key), 0);
@@ -431,9 +431,9 @@ export default function Links() {
       const base = Array.from((profiles.find((p) => p.id === profileId)?.links.keys()) || []);
       nextOrder[profileId] = (nextOrder[profileId] ?? base).filter((x) => x !== label);
       persistOrders(nextOrder);
-      showToast("Link silindi", "success");
+      showToast("Link deleted", "success");
     } catch {
-      showToast("Silinemedi");
+      showToast("Could not delete");
     } finally {
       setSaving(false);
       setTimeout(() => deletingRef.current.delete(key), 0);
@@ -476,7 +476,7 @@ export default function Links() {
     content = (
       <div className="p-8">
         <div className="min-h-[300px] flex items-center justify-center">
-          <p className="text-lg">Yükleniyor...</p>
+          <p className="text-lg">Loading...</p>
         </div>
       </div>
     );
@@ -484,13 +484,13 @@ export default function Links() {
     content = (
       <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-black/10 p-8 text-center">
         <p className="text-gray-600 dark:text-gray-300 mb-4">
-          {profiles.length === 0 ? "Önce bir profil oluşturun." : "Filtreye uyan profil bulunamadı."}
+          {profiles.length === 0 ? "Create a profile first." : "No profile found for the filter."}
         </p>
         <button
           onClick={() => setCreateProfileOpen(true)}
           className="h-11 px-5 rounded-full bg-lime-400 text-black font-bold shadow-lg shadow-lime-400/30 hover:bg-lime-300 transition"
         >
-          Profil Oluştur
+          Create Profile
         </button>
       </div>
     );
@@ -502,7 +502,7 @@ export default function Links() {
           {/* Library */}
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-md p-4">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="font-semibold">Kütüphane</h4>
+              <h4 className="font-semibold">Library</h4>
               <span className="text-xs text-gray-500">{library.length} link</span>
             </div>
 
@@ -513,7 +513,7 @@ export default function Links() {
                 maxLength={MAX_LABEL_LEN}
                 className={`h-10 rounded-lg border bg-white dark:bg-gray-900 px-3 text-sm outline-none focus:ring-2 focus:ring-[#2665D6] ${newLabel && newLabel.trim().length < 2 ? "border-red-400 dark:border-red-500" : "border-gray-300 dark:border-gray-700"
                   }`}
-                placeholder="Başlık (ör. Instagram)"
+                placeholder="Title (e.g. Instagram)"
               />
               <input
                 value={newUrl}
@@ -708,8 +708,8 @@ export default function Links() {
     <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
       {/* Header */}
       <div className="mb-4">
-        <h1 className="text-3xl md:text-4xl font-black tracking-tight">Profil Linkleri</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Kütüphaneden sürükleyip profillere bırak.</p>
+        <h1 className="text-3xl md:text-4xl font-black tracking-tight">Profile Links</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Drag and drop from library to profiles.</p>
       </div>
 
       {/* TOP MENUBAR */}
@@ -785,7 +785,7 @@ export default function Links() {
 
               if (usernameSlugMap.get(key)!.has(profile.slug)) {
                 hasDuplicate = true;
-                showToast(`@${profile.baseUsername}/${profile.slug} kombinasyonu zaten mevcut!`, "error");
+                showToast(`@${profile.baseUsername}/${profile.slug} combination already exists!`, "error");
                 break;
               }
 
@@ -795,7 +795,7 @@ export default function Links() {
             if (!hasDuplicate) {
               setProfiles(list);
               if (list.length > 0 && !selectedProfileId) setSelectedProfileId(list[0].id);
-              showToast("Profil oluşturuldu", "success");
+              showToast("Profile created", "success");
             }
           } finally {
             setLoading(false);
@@ -809,7 +809,7 @@ export default function Links() {
   );
 }
 
-/** Telefon önizleme bileşeni (desktop+mobile reuse) */
+/** Phone preview component (desktop+mobile reuse) */
 function ProfilePhonePreview({
   title,
   firstUrl,
