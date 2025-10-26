@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useCurrentAccount, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSuiServices } from "../hooks/useSuiServices";
-import { ProfileData } from "../services/profileService";
+import { ProfileData } from "../models/entity/profile-data";
 
 interface Toast {
   message: string;
