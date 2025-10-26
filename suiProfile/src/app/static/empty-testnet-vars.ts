@@ -11,4 +11,5 @@ export const EMPTY_TESTNET_VARS: TestnetVars = {
   clockId: "",
   walrusPublisherUrls: "",
   walrusAggregatorUrls: "",
+  dashboardCollectionId: ""
 } as const;
